@@ -1,4 +1,5 @@
 import { h, VNode, VNodeChildren } from 'snabbdom';
+import * as licon from 'common/licon';
 import { numberFormat } from 'common/number';
 import { dataIcon } from 'common/snabbdom';
 import { SimplePlayer } from '../interfaces';
@@ -8,7 +9,13 @@ export const ratio2percent = (r: number) => Math.round(100 * r) + '%';
 export const playerName = (p: { title?: string; name: string }) =>
   p.title ? [h('span.utitle', p.title), ' ' + p.name] : p.name;
 
-export const player = (p: SimplePlayer, asLink: boolean, withRating: boolean, defender = false, leader = false) =>
+export const player = (
+  p: SimplePlayer,
+  asLink: boolean,
+  withRating: boolean,
+  defender = false,
+  leader = false
+) =>
   h(
     'a.ulpt.user-link' + (((p.title || '') + p.name).length > 15 ? '.long' : ''),
     {
@@ -20,7 +27,7 @@ export const player = (p: SimplePlayer, asLink: boolean, withRating: boolean, de
     [
       h(
         'span.name' + (defender ? '.defender' : leader ? '.leader' : ''),
-        defender ? { attrs: dataIcon('') } : leader ? { attrs: dataIcon('') } : {},
+        defender ? { attrs: dataIcon(licon.Shield) } : leader ? { attrs: dataIcon(licon.Crown) } : {},
         playerName(p)
       ),
       withRating ? h('span.rating', ' ' + p.rating + (p.provisional ? '?' : '')) : null,

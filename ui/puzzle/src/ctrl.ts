@@ -8,7 +8,6 @@ import PuzzleSession from './session';
 import PuzzleStreak from './streak';
 import throttle from 'common/throttle';
 import {
-  Redraw,
   Vm,
   Controller,
   PuzzleOpts,
@@ -24,9 +23,10 @@ import { Chess, normalizeMove } from 'chessops/chess';
 import { chessgroundDests, scalachessCharPair } from 'chessops/compat';
 import { Config as CgConfig } from 'chessground/config';
 import { CevalCtrl } from 'ceval';
-import { ctrl as makeKeyboardMove, KeyboardMove } from 'keyboardMove';
+import { makeVoiceMove, VoiceMove, RootCtrl as VoiceRoot } from 'voice';
+import { ctrl as makeKeyboardMove, KeyboardMove, RootController as KeyboardRoot } from 'keyboardMove';
 import { defer } from 'common/defer';
-import { defined, prop, Prop, propWithEffect } from 'common';
+import { defined, prop, Prop, propWithEffect, toggle } from 'common';
 import { makeSanAndPlay } from 'chessops/san';
 import { parseFen, makeFen } from 'chessops/fen';
 import { parseSquare, parseUci, makeSquare, makeUci, opposite } from 'chessops/util';
@@ -37,6 +37,7 @@ import { storedBooleanProp } from 'common/storage';
 import { fromNodeList } from 'tree/dist/path';
 import { last } from 'tree/dist/ops';
 import { uciToMove } from 'chessground/util';
+import { Redraw } from 'common/snabbdom';
 
 export default function (opts: PuzzleOpts, redraw: Redraw): Controller {
   const vm: Vm = {
@@ -59,13 +60,18 @@ export default function (opts: PuzzleOpts, redraw: Redraw): Controller {
   }
   const session = new PuzzleSession(opts.data.angle.key, opts.data.user?.id, hasStreak);
 
+  const menu = toggle(false, redraw);
+
   // required by ceval
   vm.showComputer = () => vm.mode === 'view';
   vm.showAutoShapes = () => true;
 
   const throttleSound = (name: string) => throttle(100, () => lichess.sound.play(name));
   const loadSound = (file: string, volume?: number, delay?: number) => {
-    setTimeout(() => lichess.sound.loadOggOrMp3(file, `${lichess.sound.baseUrl}/${file}`, true), delay || 1000);
+    setTimeout(
+      () => lichess.sound.loadOggOrMp3(file, `${lichess.sound.baseUrl}/${file}`, true),
+      delay || 1000
+    );
     return () => lichess.sound.play(file, volume);
   };
   const sound = {
@@ -87,28 +93,32 @@ export default function (opts: PuzzleOpts, redraw: Redraw): Controller {
   }
 
   let keyboardMove: KeyboardMove | undefined;
+  let voiceMove: VoiceMove | undefined;
 
   function setChessground(this: Controller, cg: CgApi): void {
     ground(cg);
-    if (opts.pref.keyboardMove) {
-      keyboardMove = makeKeyboardMove(
-        {
-          data: {
-            game: { variant: { key: 'standard' } },
-            player: { color: vm.pov },
-          },
-          chessground: cg,
-          sendMove: playUserMove,
-          redraw: this.redraw,
-          userJumpPlyDelta,
-          next: nextPuzzle,
-          vote,
-        },
-        { fen: this.vm.node.fen }
-      );
-      this.keyboardMove = keyboardMove;
-      requestAnimationFrame(() => this.redraw());
-    }
+    const makeRoot = () => ({
+      data: {
+        game: { variant: { key: 'standard' } },
+        player: { color: vm.pov },
+      },
+      chessground: cg,
+      sendMove: playUserMove,
+      auxMove: auxMove,
+      redraw: this.redraw,
+      flipNow: flip,
+      userJumpPlyDelta,
+      next: nextPuzzle,
+      vote,
+      solve: viewSolution,
+    });
+    if (opts.pref.voiceMove)
+      this.voiceMove = voiceMove = makeVoiceMove(makeRoot() as VoiceRoot, this.vm.node.fen);
+    if (opts.pref.keyboardMove)
+      this.keyboardMove = keyboardMove = makeKeyboardMove(makeRoot() as KeyboardRoot, {
+        fen: this.vm.node.fen,
+      });
+    requestAnimationFrame(() => this.redraw());
   }
 
   function withGround<A>(f: (cg: CgApi) => A): A | undefined {
@@ -202,9 +212,23 @@ export default function (opts: PuzzleOpts, redraw: Redraw): Controller {
     g.set(makeCgOpts());
   }
 
+  function auxMove(orig: Key, dest: Key, role?: Role) {
+    withGround(g => {
+      if (!role) {
+        g.move(orig, dest);
+        g.state.movable.dests = undefined;
+        g.state.turnColor = opposite(g.state.turnColor);
+        if (promotion.start(orig, dest, { submit: playUserMove, show: voiceMove?.promotionHook() })) return;
+      }
+      playUserMove(orig, dest, role);
+    });
+  }
+
   function userMove(orig: Key, dest: Key): void {
     vm.justPlayed = orig;
-    if (!promotion.start(orig, dest, playUserMove)) playUserMove(orig, dest);
+    if (!promotion.start(orig, dest, { submit: playUserMove, show: voiceMove?.promotionHook() }))
+      playUserMove(orig, dest);
+    voiceMove?.update(vm.node.fen);
     keyboardMove?.update({ fen: vm.node.fen });
   }
 
@@ -347,9 +371,7 @@ export default function (opts: PuzzleOpts, redraw: Redraw): Controller {
     }
     redraw();
     if (!next) {
-      if (data.replay) {
-        lichess.redirect(`/training/dashboard/${data.replay.days}`);
-      } else {
+      if (!data.replay) {
         alert('No more puzzles available! Try another theme.');
         lichess.redirect('/training/themes');
       }
@@ -367,8 +389,12 @@ export default function (opts: PuzzleOpts, redraw: Redraw): Controller {
       if (isPuzzleData(n)) {
         initiate(n);
         redraw();
-      } else lichess.redirect(`/training/dashboard/${n.days}`);
+      }
     });
+
+    if (data.replay && vm.round === undefined) {
+      lichess.redirect(`/training/dashboard/${data.replay.days}`);
+    }
 
     if (!streak && !data.replay) {
       const path = router.withLang(`/training/${data.angle.key}`);
@@ -482,6 +508,7 @@ export default function (opts: PuzzleOpts, redraw: Redraw): Controller {
     vm.justPlayed = undefined;
     vm.autoScrollRequested = true;
     keyboardMove?.update({ fen: vm.node.fen });
+    voiceMove?.update(vm.node.fen);
     lichess.pubsub.emit('ply', vm.node.ply);
   }
 
@@ -507,7 +534,7 @@ export default function (opts: PuzzleOpts, redraw: Redraw): Controller {
     mergeSolution(tree, vm.initialPath, data.puzzle.solution, vm.pov);
     reorderChildren(vm.initialPath, true);
 
-    // try and play the solution next move
+    // try to play the solution next move
     const next = vm.node.children[0];
     if (next && next.puzzle === 'good') userJump(vm.path + next.id);
     else {
@@ -621,6 +648,7 @@ export default function (opts: PuzzleOpts, redraw: Redraw): Controller {
     setChessground,
     ground,
     makeCgOpts,
+    voiceMove,
     keyboardMove,
     keyboardHelp,
     userJump,
@@ -675,5 +703,6 @@ export default function (opts: PuzzleOpts, redraw: Redraw): Controller {
     flipped: () => flipped,
     showRatings: opts.showRatings,
     nvui: window.LichessPuzzleNvui ? (window.LichessPuzzleNvui(redraw) as NvuiPlugin) : undefined,
+    menu,
   };
 }

@@ -1,6 +1,5 @@
 package views.html.simul
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -13,7 +12,7 @@ object homeInner:
       createds: List[lila.simul.Simul],
       starteds: List[lila.simul.Simul],
       finisheds: List[lila.simul.Simul]
-  )(using ctx: Context) =
+  )(using ctx: WebContext) =
     div(cls := "box")(
       h1(cls := "box__top")(trans.simultaneousExhibitions()),
       table(cls := "slist slist-pad")(
@@ -30,7 +29,7 @@ object homeInner:
               tr(cls := "scheduled")(
                 simTd(sim),
                 simHost(sim),
-                td(cls := "players text", dataIcon := "")(sim.applicants.size)
+                td(cls := "players text", dataIcon := licon.User)(sim.applicants.size)
               )
             }
           )
@@ -47,7 +46,7 @@ object homeInner:
             tr(cls := "scheduled")(
               simTd(sim),
               simHost(sim),
-              td(cls := "players text", dataIcon := "")(sim.applicants.size)
+              td(cls := "players text", dataIcon := licon.User)(sim.applicants.size)
             )
           },
           tr(cls := "create")(
@@ -72,7 +71,7 @@ object homeInner:
               tr(
                 simTd(sim),
                 simHost(sim),
-                td(cls := "players text", dataIcon := "")(sim.pairings.size)
+                td(cls := "players text", dataIcon := licon.User)(sim.pairings.size)
               )
             }
           )
@@ -89,7 +88,7 @@ object homeInner:
             tr(
               simTd(sim),
               simHost(sim),
-              td(cls := "players text", dataIcon := "")(sim.pairings.size)
+              td(cls := "players text", dataIcon := licon.User)(sim.pairings.size)
             )
           }
         )
@@ -104,7 +103,7 @@ object homeInner:
       )
     )
 
-  private def simHost(sim: lila.simul.Simul)(using ctx: Context) =
+  private def simHost(sim: lila.simul.Simul)(using ctx: WebContext) =
     td(cls := "host")(
       userIdLink(sim.hostId.some, withOnline = false),
       ctx.pref.showRatings option frag(

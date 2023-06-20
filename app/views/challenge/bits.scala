@@ -2,7 +2,6 @@ package views.html.challenge
 
 import play.api.libs.json.{ Json, JsObject }
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.challenge.Challenge
@@ -12,7 +11,7 @@ import controllers.routes
 
 object bits:
 
-  def js(c: Challenge, json: JsObject, owner: Boolean, color: Option[chess.Color] = None)(using Context) =
+  def js(c: Challenge, json: JsObject, owner: Boolean, color: Option[chess.Color] = None)(using WebContext) =
     frag(
       jsModule("challengePage"),
       embedJsUnsafeLoadThen(s"""challengePageStart(${safeJsonValue(
@@ -25,9 +24,12 @@ object bits:
         )})""")
     )
 
-  def details(c: Challenge, requestedColor: Option[chess.Color])(using ctx: Context) =
+  def details(c: Challenge, requestedColor: Option[chess.Color])(using ctx: WebContext) =
     div(cls := "details")(
-      div(cls := "variant", dataIcon := (if (c.initialFen.isDefined) '' else c.perfType.iconChar))(
+      div(
+        cls      := "variant",
+        dataIcon := (if c.initialFen.isDefined then licon.Feather else c.perfType.icon)
+      )(
         div(
           views.html.game.bits.variantLink(c.variant, c.perfType.some, c.initialFen),
           br,
@@ -40,7 +42,7 @@ object bits:
         )
       ),
       div(cls := "mode")(
-        c.open.fold(c.colorChoice.some)(_.colorFor(ctx.me, requestedColor)) map { colorChoice =>
+        c.open.fold(c.colorChoice.some)(_.colorFor(requestedColor)) map { colorChoice =>
           frag(colorChoice.trans(), " • ")
         },
         modeName(c.mode)

@@ -25,6 +25,6 @@
   <string name="currentRoundUrl">Jelenlegi forduló URL</string>
   <string name="currentGameUrl">Jelenlegi játszma URL</string>
   <string name="downloadAllRounds">Összes játszma letöltése</string>
-  <string name="definitivelyDeleteRound" comment="definitivelyDeleteRound&#10;&#10;Refers to live tournaments being broadcast on lichess&#10;&#10;Description (also translateable): Delete all games of this round. The source will need to be active in order to re-create them.">A forduló és játszmáinak végleges törlése.</string>
+  <string name="definitivelyDeleteRound">A forduló és játszmáinak végleges törlése.</string>
   <string name="deleteAllGamesOfThisRound">Minden játék törlése ebben a fordulóban. A forrásnak aktívnak kell lennie, hogy újra létre lehessen hozni őket.</string>
 </resources>

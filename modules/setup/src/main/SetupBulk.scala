@@ -11,7 +11,7 @@ import ornicar.scalalib.ThreadLocalRandom
 
 import lila.common.{ Bearer, Days, Template }
 import lila.game.{ GameRule, IdGenerator }
-import lila.oauth.{ OAuthScope, OAuthServer }
+import lila.oauth.{ OAuthScope, OAuthServer, EndpointScopes }
 import lila.user.User
 
 object SetupBulk:
@@ -197,16 +197,15 @@ final class SetupBulkApi(oauthServer: OAuthServer, idGenerator: IdGenerator)(usi
       .mapConcat { case (whiteToken, blackToken) =>
         List(whiteToken, blackToken) // flatten now, re-pair later!
       }
-      .mapAsync(8) { token =>
-        oauthServer.auth(token, List(OAuthScope.Challenge.Write), none) map {
+      .mapAsync(8): token =>
+        oauthServer.auth(token, OAuthScope.select(_.Challenge.Write) into EndpointScopes, none) map {
           _.left.map { BadToken(token, _) }
         }
-      }
       .runFold[Either[List[BadToken], List[UserId]]](Right(Nil)) {
         case (Left(bads), Left(bad))       => Left(bad :: bads)
         case (Left(bads), _)               => Left(bads)
         case (Right(_), Left(bad))         => Left(bad :: Nil)
-        case (Right(users), Right(scoped)) => Right(scoped.user.id :: users)
+        case (Right(users), Right(scoped)) => Right(scoped.me :: users)
       }
       .flatMap {
         case Left(errors) => fuccess(Left(ScheduleError.BadTokens(errors.reverse)))
@@ -228,19 +227,17 @@ final class SetupBulkApi(oauthServer: OAuthServer, idGenerator: IdGenerator)(usi
               .toList
             val nbGames = pairs.size
             val cost    = nbGames * (if me.isVerified || me.isApiHog then 1 else 3)
-            rateLimit[Fu[Result]](me.id, cost = cost) {
+            rateLimit(me.id, fuccess(Left(ScheduleError.RateLimited)), cost = cost):
               lila.mon.api.challenge.bulk.scheduleNb(me.id.value).increment(nbGames).unit
               idGenerator
                 .games(nbGames)
-                .map {
+                .map:
                   _.toList zip pairs
-                }
-                .map {
+                .map:
                   _.map { case (id, (w, b)) =>
                     ScheduledGame(id, w, b)
                   }
-                }
-                .dmap {
+                .dmap:
                   ScheduledBulk(
                     _id = ThreadLocalRandom nextString 8,
                     by = me.id,
@@ -255,7 +252,5 @@ final class SetupBulkApi(oauthServer: OAuthServer, idGenerator: IdGenerator)(usi
                     scheduledAt = nowInstant,
                     fen = data.fen
                   )
-                }
                 .dmap(Right.apply)
-            }(fuccess(Left(ScheduleError.RateLimited)))
       }

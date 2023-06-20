@@ -54,10 +54,17 @@ const showText = (ctrl: SimulCtrl) =>
       ])
     : undefined;
 
-const started = (ctrl: SimulCtrl) => [util.title(ctrl), showText(ctrl), results(ctrl), pairings(ctrl)];
+const started = (ctrl: SimulCtrl) => [
+  h('div.box__top', [util.title(ctrl), showText(ctrl)]),
+  results(ctrl),
+  pairings(ctrl),
+];
 
 const finished = (ctrl: SimulCtrl) => [
-  h('div.box__top', [util.title(ctrl), h('div.box__top__actions', h('div.finished', ctrl.trans('finished')))]),
+  h('div.box__top', [
+    util.title(ctrl),
+    h('div.box__top__actions', h('div.finished', ctrl.trans('finished'))),
+  ]),
   showText(ctrl),
   results(ctrl),
   pairings(ctrl),

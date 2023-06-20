@@ -2,10 +2,8 @@ package controllers
 
 import play.api.mvc.*
 
-import lila.api.Context
 import lila.app.{ given, * }
 import lila.forum.ForumTopic
-import lila.user.User
 
 private[controllers] trait ForumController { self: LilaController =>
 
@@ -20,41 +18,41 @@ private[controllers] trait ForumController { self: LilaController =>
   protected def CategGrantWrite[A <: Result](
       categId: ForumCategId,
       tryingToPostAsMod: Boolean = false
-  )(a: => Fu[A])(using Context): Fu[Result] =
-    access.isGrantedWrite(categId, tryingToPostAsMod) flatMap { granted =>
-      if (granted) a
-      else fuccess(Forbidden("You cannot post to this category"))
+  )(a: => Fu[A])(using WebContext, Me): Fu[Result] =
+    access.isGrantedWrite(categId, tryingToPostAsMod) flatMap {
+      if _ then a
+      else Forbidden("You cannot post to this category")
     }
 
   protected def CategGrantMod[A <: Result](
       categId: ForumCategId
-  )(a: => Fu[A])(using Context): Fu[Result] =
+  )(a: => Fu[A])(using WebContext, Me): Fu[Result] =
     access.isGrantedMod(categId) flatMap { granted =>
-      if (granted | isGranted(_.ModerateForum)) a
-      else fuccess(Forbidden("You cannot post to this category"))
+      if granted | isGranted(_.ModerateForum) then a
+      else Forbidden("You cannot post to this category")
     }
 
   protected def TopicGrantModBySlug[A <: Result](
       categId: ForumCategId,
-      me: User,
       topicSlug: String
-  )(a: => Fu[A])(using Context): Fu[Result] =
-    TopicGrantMod(categId, me)(topicRepo.byTree(categId, topicSlug))(a)
+  )(a: => Fu[A])(using WebContext, Me): Fu[Result] =
+    TopicGrantMod(categId)(topicRepo.byTree(categId, topicSlug))(a)
 
-  protected def TopicGrantModById[A <: Result](categId: ForumCategId, me: User, topicId: ForumTopicId)(
+  protected def TopicGrantModById[A <: Result](categId: ForumCategId, topicId: ForumTopicId)(
       a: => Fu[A]
-  )(using Context): Fu[Result] =
-    TopicGrantMod(categId, me)(topicRepo.forUser(me.some).byId(topicId))(a)
+  )(using WebContext)(using me: Me): Fu[Result] =
+    TopicGrantMod(categId)(topicRepo.forUser(me.some).byId(topicId))(a)
 
-  private def TopicGrantMod[A <: Result](categId: ForumCategId, me: User)(
+  private def TopicGrantMod[A <: Result](categId: ForumCategId)(
       getTopic: => Fu[Option[ForumTopic]]
-  )(a: => Fu[A])(using Context): Fu[Result] =
+  )(a: => Fu[A])(using WebContext)(using me: Me): Fu[Result] =
     access.isGrantedMod(categId) flatMap { granted =>
-      if (granted | isGranted(_.ModerateForum)) a
+      if granted | isGranted(_.ModerateForum)
+      then a
       else
         getTopic flatMap { topic =>
-          if (topic.exists(_ isUblogAuthor me)) a
-          else fuccess(Forbidden("You cannot moderate this forum"))
+          if topic.exists(_ isUblogAuthor me) then a
+          else Forbidden("You cannot moderate this forum")
         }
     }
 }

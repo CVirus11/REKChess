@@ -2,15 +2,16 @@ package lila.relay
 
 import akka.actor.*
 import com.softwaremill.macwire.*
+import com.softwaremill.tagging.*
 import play.api.libs.ws.StandaloneWSClient
 
 import lila.common.config.*
 
 @Module
-@annotation.nowarn("msg=unused")
 final class Env(
     ws: StandaloneWSClient,
     db: lila.db.Db,
+    yoloDb: lila.db.AsyncDb @@ lila.db.YoloDb,
     studyApi: lila.study.StudyApi,
     multiboard: lila.study.StudyMultiBoard,
     studyRepo: lila.study.StudyRepo,
@@ -33,9 +34,11 @@ final class Env(
 
   lazy val tourForm = wire[RelayTourForm]
 
-  private lazy val roundRepo = new RelayRoundRepo(db(CollName("relay")))
+  private val colls = wire[RelayColls]
 
-  private lazy val tourRepo = new RelayTourRepo(db(CollName("relay_tour")))
+  private lazy val roundRepo = RelayRoundRepo(colls.round)
+
+  private lazy val tourRepo = RelayTourRepo(colls.tour)
 
   private lazy val leaderboard = wire[RelayLeaderboardApi]
 
@@ -55,6 +58,8 @@ final class Env(
 
   private lazy val formatApi = wire[RelayFormatApi]
 
+  private lazy val delay = wire[RelayDelay]
+
   // start the sync scheduler
   wire[RelayFetch]
 
@@ -69,10 +74,15 @@ final class Env(
     },
     "relayToggle" -> { case lila.study.actorApi.RelayToggle(id, v, who) =>
       studyApi.isContributor(id, who.u) foreach {
-        _ ?? api.requestPlay(id into RelayRoundId, v)
+        _ so api.requestPlay(id into RelayRoundId, v)
       }
     },
     "isOfficialRelay" -> { case lila.study.actorApi.IsOfficialRelay(studyId, promise) =>
       promise completeWith api.isOfficial(studyId)
     }
   )
+
+private class RelayColls(mainDb: lila.db.Db, yoloDb: lila.db.AsyncDb @@ lila.db.YoloDb):
+  val round = mainDb(CollName("relay"))
+  val tour  = mainDb(CollName("relay_tour"))
+  val delay = yoloDb(CollName("relay_delay"))

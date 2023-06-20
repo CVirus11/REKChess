@@ -2,7 +2,6 @@ package views.html.practice
 
 import play.api.data.Form
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -10,7 +9,7 @@ import controllers.routes
 
 object config:
 
-  def apply(structure: lila.practice.PracticeStructure, form: Form[?])(implicit ctx: Context) =
+  def apply(structure: lila.practice.PracticeStructure, form: Form[?])(using WebContext) =
     views.html.base.layout(
       title = "Practice structure",
       moreCss = cssTag("mod.misc")
@@ -23,13 +22,13 @@ object config:
             postForm(action := routes.Practice.configSave)(
               textarea(cls := "practice_text", name := "text")(form("text").value),
               errMsg(form("text")),
-              submitButton(cls := "button button-fat text", dataIcon := "")("Save")
+              submitButton(cls := "button button-fat text", dataIcon := licon.Checkmark)("Save")
             ),
             div(cls := "preview")(
               ol(
                 structure.sections.map { section =>
                   li(
-                    h2(section.name, "#", section.id, section.hide ?? " [hidden]"),
+                    h2(section.name, "#", section.id, section.hide so " [hidden]"),
                     ol(
                       section.studies.map { stud =>
                         li(
@@ -39,7 +38,7 @@ object config:
                                 stud.name,
                                 "#",
                                 stud.id,
-                                stud.hide ?? " [hidden]"
+                                stud.hide so " [hidden]"
                               )
                             ),
                             em(stud.desc),

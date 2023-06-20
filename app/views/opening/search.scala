@@ -2,7 +2,6 @@ package views.html.opening
 
 import controllers.routes
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.opening.{ OpeningConfig, OpeningSearchResult }
@@ -22,7 +21,7 @@ object search:
         autocomplete   := "off",
         spellcheck     := "false"
       ),
-      submitButton(cls := "button", dataIcon := "")
+      submitButton(cls := "button", dataIcon := licon.Search)
     )
 
   def resultsList(results: List[OpeningSearchResult]) =
@@ -37,7 +36,7 @@ object search:
       }
     )
 
-  def resultsPage(q: String, results: List[OpeningSearchResult], config: OpeningConfig)(using Context) =
+  def resultsPage(q: String, results: List[OpeningSearchResult], config: OpeningConfig)(using WebContext) =
     views.html.base.layout(
       moreCss = cssTag("opening"),
       moreJs = moreJs(none),

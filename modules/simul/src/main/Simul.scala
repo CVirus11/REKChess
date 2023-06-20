@@ -28,8 +28,8 @@ case class Simul(
     hostSeenAt: Option[Instant],
     color: Option[String],
     text: String,
-    team: Option[TeamId],
-    featurable: Option[Boolean]
+    featurable: Option[Boolean],
+    conditions: SimulCondition.All
 ):
   inline def id = _id
 
@@ -110,20 +110,22 @@ case class Simul(
 
   def gameIds = pairings.map(_.gameId)
 
-  def perfTypes: List[lila.rating.PerfType] =
-    variants.flatMap { variant =>
+  def perfTypes: List[PerfType] =
+    variants.flatMap: variant =>
       lila.game.PerfPicker.perfType(
         speed = Speed(clock.config.some),
         variant = variant,
         daysPerTurn = none
       )
-    }
+
+  def mainPerfType =
+    perfTypes.find(pt => PerfType.variantOf(pt).standard) orElse perfTypes.headOption getOrElse PerfType.Rapid
 
   def applicantRatio = s"${applicants.count(_.accepted)}/${applicants.size}"
 
   def variantRich = variants.sizeIs > 3
 
-  def isHost(userOption: Option[User]): Boolean = userOption ?? isHost
+  def isHost(userOption: Option[User]): Boolean = userOption so isHost
   def isHost(user: User): Boolean               = user.id == hostId
 
   def playingPairings = pairings filterNot (_.finished)
@@ -155,8 +157,8 @@ object Simul:
       color: String,
       text: String,
       estimatedStartAt: Option[Instant],
-      team: Option[TeamId],
-      featurable: Option[Boolean]
+      featurable: Option[Boolean],
+      conditions: SimulCondition.All
   ): Simul = Simul(
     _id = SimulId(ThreadLocalRandom nextString 8),
     name = name,
@@ -184,6 +186,6 @@ object Simul:
     hostSeenAt = nowInstant.some,
     color = color.some,
     text = text,
-    team = team,
-    featurable = featurable
+    featurable = featurable,
+    conditions = conditions
   )

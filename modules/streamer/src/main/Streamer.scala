@@ -102,11 +102,9 @@ object Streamer:
     def minUrl  = s"youtube.com/channel/$channelId/live"
   object YouTube:
     private val ChannelIdRegex = """^([\w-]{24})$""".r
-    private val UrlRegex       = """youtube\.com/channel/([\w-]{24})""".r.unanchored
     def parseChannelId(str: String): Option[String] =
       str match
         case ChannelIdRegex(c) => c.some
-        case UrlRegex(c)       => c.some
         case _                 => none
 
   trait WithContext:
@@ -123,7 +121,7 @@ object Streamer:
       subscribed: Boolean = false
   ) extends WithContext:
     def redirectToLiveUrl: Option[String] =
-      stream ?? { s =>
+      stream so { s =>
         streamer.twitch.ifTrue(s.twitch).map(_.fullUrl) orElse
           streamer.youTube.ifTrue(s.youTube).map(_.fullUrl)
       }

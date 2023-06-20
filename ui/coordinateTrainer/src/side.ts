@@ -2,7 +2,7 @@ import { h, VNode, VNodes } from 'snabbdom';
 import { bind } from 'common/snabbdom';
 import CoordinateTrainerCtrl from './ctrl';
 import { ColorChoice, TimeControl, Mode } from './interfaces';
-import { toggle } from 'common/toggle';
+import { toggle } from 'common/controls';
 
 const colors: [ColorChoice, string][] = [
   ['black', 'asBlack'],
@@ -109,6 +109,11 @@ const configurationButtons = (ctrl: CoordinateTrainerCtrl): VNodes => [
               change: e => {
                 const target = e.target as HTMLInputElement;
                 ctrl.mode(target.value as Mode);
+                if (target.value === 'nameSquare') {
+                  if (ctrl.voice.enabled()) lichess.mic.start();
+                } else {
+                  lichess.mic.stop();
+                }
               },
               keyup: ctrl.onRadioInputKeyUp,
             },
@@ -118,7 +123,9 @@ const configurationButtons = (ctrl: CoordinateTrainerCtrl): VNodes => [
             {
               attrs: {
                 for: `coord_mode_${mode}`,
-                title: ctrl.trans(mode === 'findSquare' ? 'aCoordinateAppears' : 'aSquareIsHighlightedExplanation'),
+                title: ctrl.trans(
+                  mode === 'findSquare' ? 'aCoordinateAppears' : 'aSquareIsHighlightedExplanation'
+                ),
               },
             },
             ctrl.trans(mode)
@@ -153,7 +160,9 @@ const configurationButtons = (ctrl: CoordinateTrainerCtrl): VNodes => [
             {
               attrs: {
                 for: `coord_timeControl_${timeControl}`,
-                title: ctrl.trans(timeControl === 'thirtySeconds' ? 'youHaveThirtySeconds' : 'goAsLongAsYouWant'),
+                title: ctrl.trans(
+                  timeControl === 'thirtySeconds' ? 'youHaveThirtySeconds' : 'goAsLongAsYouWant'
+                ),
               },
             },
             timeControlLabel
@@ -270,14 +279,21 @@ const settings = (ctrl: CoordinateTrainerCtrl): VNode => {
       trans,
       redraw
     ),
-    toggle({ name: 'showPieces', id: 'showPieces', checked: showPieces(), change: showPieces }, trans, redraw),
+    toggle(
+      { name: 'showPieces', id: 'showPieces', checked: showPieces(), change: showPieces },
+      trans,
+      redraw
+    ),
   ]);
 };
 
 const playingAs = (ctrl: CoordinateTrainerCtrl): VNode => {
   return h('div.box.current-status.current-status--color', [
     h(`label.color_${ctrl.orientation}`, h('i')),
-    h('em', ctrl.trans.noarg(ctrl.orientation === 'white' ? 'youPlayTheWhitePieces' : 'youPlayTheBlackPieces')),
+    h(
+      'em',
+      ctrl.trans.noarg(ctrl.orientation === 'white' ? 'youPlayTheWhitePieces' : 'youPlayTheBlackPieces')
+    ),
   ]);
 };
 

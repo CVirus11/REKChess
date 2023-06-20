@@ -1,6 +1,7 @@
 import { h, VNode } from 'snabbdom';
+import * as licon from 'common/licon';
 import TournamentController from '../ctrl';
-import { TournamentData, MaybeVNodes } from '../interfaces';
+import { TournamentData } from '../interfaces';
 import * as pagination from '../pagination';
 import { controls, standing, podium } from './arena';
 import { teamStanding } from './battle';
@@ -8,6 +9,7 @@ import header from './header';
 import playerInfo from './playerInfo';
 import teamInfo from './teamInfo';
 import { numberRow } from './util';
+import { MaybeVNodes } from 'common/snabbdom';
 
 function confetti(data: TournamentData): VNode | undefined {
   if (data.me && data.isRecentlyFinished && lichess.once('tournament.end.canvas.' + data.id))
@@ -59,7 +61,7 @@ function stats(ctrl: TournamentController): VNode | undefined {
         'a.text',
         {
           attrs: {
-            'data-icon': '',
+            'data-icon': licon.Download,
             href: `/api/tournament/${data.id}/games`,
             download: true,
           },
@@ -71,7 +73,7 @@ function stats(ctrl: TournamentController): VNode | undefined {
           'a.text',
           {
             attrs: {
-              'data-icon': '',
+              'data-icon': licon.Download,
               href: `/api/tournament/${data.id}/games?player=${ctrl.opts.userId}`,
               download: true,
             },
@@ -82,7 +84,7 @@ function stats(ctrl: TournamentController): VNode | undefined {
         'a.text',
         {
           attrs: {
-            'data-icon': '',
+            'data-icon': licon.Download,
             href: `/api/tournament/${data.id}/results`,
             download: true,
           },
@@ -93,7 +95,7 @@ function stats(ctrl: TournamentController): VNode | undefined {
         'a.text',
         {
           attrs: {
-            'data-icon': '',
+            'data-icon': licon.Download,
             href: `/api/tournament/${data.id}/results?as=csv`,
             download: true,
           },
@@ -105,7 +107,7 @@ function stats(ctrl: TournamentController): VNode | undefined {
         'a.text',
         {
           attrs: {
-            'data-icon': '',
+            'data-icon': licon.InfoCircle,
             href: 'https://lichess.org/api#tag/Arena-tournaments',
           },
         },
@@ -121,7 +123,9 @@ export function main(ctrl: TournamentController): MaybeVNodes {
   const pag = pagination.players(ctrl);
   const teamS = teamStanding(ctrl, 'finished');
   return [
-    ...(teamS ? [header(ctrl), teamS] : [h('div.podium-wrap', [confetti(ctrl.data), header(ctrl), podium(ctrl)])]),
+    ...(teamS
+      ? [header(ctrl), teamS]
+      : [h('div.podium-wrap', [confetti(ctrl.data), header(ctrl), podium(ctrl)])]),
     controls(ctrl, pag),
     standing(ctrl, pag),
   ];

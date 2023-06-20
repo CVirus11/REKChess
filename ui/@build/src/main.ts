@@ -164,7 +164,9 @@ class Env {
 
     lines(text).forEach(line =>
       console.log(
-        `${prefix ? prefix + ' - ' : ''}${error ? esc(line, codes.error) : warn ? esc(line, codes.warn) : line}`
+        `${prefix ? prefix + ' - ' : ''}${
+          error ? esc(line, codes.error) : warn ? esc(line, codes.warn) : line
+        }`
       )
     );
   }
@@ -173,13 +175,18 @@ class Env {
     const err = [...this.exitCode.values()].find(x => x);
     const allDone = this.exitCode.size === 3;
 
-    this.log(`${code === 0 ? 'Done' : colors.red('Failed')}` + (this.watch ? ` - ${colors.grey('Watching')}...` : ''), {
-      ctx: ctx,
-    });
+    this.log(
+      `${code === 0 ? 'Done' : colors.red('Failed')}` +
+        (this.watch ? ` - ${colors.grey('Watching')}...` : ''),
+      {
+        ctx: ctx,
+      }
+    );
 
     if (allDone) {
       if (!err) postBuild();
-      if (this.startTime && !err) this.log(`Done in ${colors.green((Date.now() - this.startTime) / 1000 + '')}s`);
+      if (this.startTime && !err)
+        this.log(`Done in ${colors.green((Date.now() - this.startTime) / 1000 + '')}s`);
       this.startTime = undefined; // it's pointless to time subsequent builds, they are too fast
       if (!env.watch) {
         process.exitCode = err || 0;
@@ -199,8 +206,8 @@ export const codes: any = {
   magenta: '35',
   cyan: '36',
   grey: '90',
-  error: '31;41',
-  warn: '33;43',
+  error: '31',
+  warn: '33',
 };
 
 const colorForCtx = (ctx: string, color: any): string =>

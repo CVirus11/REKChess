@@ -1,5 +1,6 @@
 import { h, VNode } from 'snabbdom';
 import { Prop, prop } from 'common';
+import * as licon from 'common/licon';
 import { bind, dataIcon, iconTag, onInsert } from 'common/snabbdom';
 import { storedProp, storedJsonProp, StoredJsonProp, StoredProp, storedStringProp } from 'common/storage';
 import { ExplorerDb, ExplorerSpeed, ExplorerMode } from './interfaces';
@@ -61,8 +62,8 @@ export class ExplorerConfigCtrl {
     const byDbData = {} as ByDbSettings;
     for (const db of this.allDbs) {
       byDbData[db] = {
-        since: storedStringProp('explorer.since-2.' + db, ''),
-        until: storedStringProp('explorer.until-2.' + db, ''),
+        since: storedStringProp('analyse.explorer.since-2.' + db, ''),
+        until: storedStringProp('analyse.explorer.until-2.' + db, ''),
       };
     }
     const prevData = previous?.data;
@@ -74,13 +75,13 @@ export class ExplorerConfigCtrl {
         str => str as ExplorerDb,
         v => v
       ),
-      rating: storedJsonProp('explorer.rating', () => allRatings.slice(1)),
+      rating: storedJsonProp('analyse.explorer.rating', () => allRatings.slice(1)),
       speed: storedJsonProp<ExplorerSpeed[]>('explorer.speed', () => allSpeeds.slice(1)),
       mode: storedJsonProp<ExplorerMode[]>('explorer.mode', () => allModes),
       byDbData,
       playerName: {
         open: prevData?.playerName.open || prop(false),
-        value: storedStringProp('explorer.player.name', document.body.dataset['user'] || ''),
+        value: storedStringProp('analyse.explorer.player.name', document.body.dataset['user'] || ''),
         previous: storedJsonProp<string[]>('explorer.player.name.previous', () => []),
       },
       color: prevData?.color || prop('white'),
@@ -130,13 +131,17 @@ export class ExplorerConfigCtrl {
 
 export function view(ctrl: ExplorerConfigCtrl): VNode[] {
   return [
-    ctrl.data.db() === 'masters' ? masterDb(ctrl) : ctrl.data.db() === 'lichess' ? lichessDb(ctrl) : playerDb(ctrl),
+    ctrl.data.db() === 'masters'
+      ? masterDb(ctrl)
+      : ctrl.data.db() === 'lichess'
+      ? lichessDb(ctrl)
+      : playerDb(ctrl),
     h(
       'section.save',
       h(
         'button.button.button-green.text',
         {
-          attrs: dataIcon(''),
+          attrs: dataIcon(licon.Checkmark),
           hook: bind('click', ctrl.toggleOpen),
         },
         ctrl.root.trans.noarg('allSet')
@@ -168,7 +173,7 @@ const playerDb = (ctrl: ExplorerConfigCtrl) => {
         h(
           'button.button-link.text.color',
           {
-            attrs: dataIcon(''),
+            attrs: dataIcon(licon.ChasingArrows),
             hook: bind('click', ctrl.toggleColor, ctrl.root.redraw),
           },
           ' ' + ctrl.root.trans(ctrl.data.color() == 'white' ? 'asWhite' : 'asBlack')
@@ -184,7 +189,10 @@ const playerDb = (ctrl: ExplorerConfigCtrl) => {
 const masterDb = (ctrl: ExplorerConfigCtrl) =>
   h('div', [
     h('section.date', [
-      h('label', [ctrl.root.trans.noarg('since'), yearInput(ctrl.data.byDb().since, () => '', ctrl.root.redraw)]),
+      h('label', [
+        ctrl.root.trans.noarg('since'),
+        yearInput(ctrl.data.byDb().since, () => '', ctrl.root.redraw),
+      ]),
       h('label', [
         ctrl.root.trans.noarg('until'),
         yearInput(ctrl.data.byDb().until, ctrl.data.byDb().since, ctrl.root.redraw),
@@ -294,7 +302,10 @@ const yearInput = (prop: StoredProp<Month>, after: () => Month, redraw: Redraw) 
 
 const monthSection = (ctrl: ExplorerConfigCtrl) =>
   h('section.date', [
-    h('label', [ctrl.root.trans.noarg('since'), monthInput(ctrl.data.byDb().since, () => '', ctrl.root.redraw)]),
+    h('label', [
+      ctrl.root.trans.noarg('since'),
+      monthInput(ctrl.data.byDb().since, () => '', ctrl.root.redraw),
+    ]),
     h('label', [
       ctrl.root.trans.noarg('until'),
       monthInput(ctrl.data.byDb().until, ctrl.data.byDb().since, ctrl.root.redraw),
@@ -334,14 +345,15 @@ const playerModal = (ctrl: ExplorerConfigCtrl) => {
       ]),
       h(
         'div.previous',
-        [...(ctrl.myName ? [ctrl.myName] : []), ...ctrl.participants, ...ctrl.data.playerName.previous()].map(name =>
-          h(
-            `button.button${name == ctrl.myName ? '.button-green' : ''}`,
-            {
-              hook: bind('click', () => onSelect(name)),
-            },
-            name
-          )
+        [...(ctrl.myName ? [ctrl.myName] : []), ...ctrl.participants, ...ctrl.data.playerName.previous()].map(
+          name =>
+            h(
+              `button.button${name == ctrl.myName ? '.button-green' : ''}`,
+              {
+                hook: bind('click', () => onSelect(name)),
+              },
+              name
+            )
         )
       ),
     ],

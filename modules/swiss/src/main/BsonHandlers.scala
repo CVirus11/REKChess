@@ -81,7 +81,7 @@ object BsonHandlers:
         isForfeit -> w.boolO(o.isForfeit)
       )
 
-  import SwissCondition.BSONHandlers.given
+  import SwissCondition.bsonHandler
 
   given BSON[Swiss.Settings] with
     def reads(r: BSON.Reader) =
@@ -93,7 +93,7 @@ object BsonHandlers:
         chatFor = r.intO("c") | Swiss.ChatFor.default,
         roundInterval = (r.intO("i") | 60).seconds,
         password = r.strO("p"),
-        conditions = r.getO[SwissCondition.All]("o") getOrElse SwissCondition.All.empty,
+        conditions = r.getD[SwissCondition.All]("o"),
         forbiddenPairings = r.getD[String]("fp"),
         manualPairings = r.getD[String]("mp")
       )
@@ -106,7 +106,7 @@ object BsonHandlers:
         "c"  -> (s.chatFor != Swiss.ChatFor.default).option(s.chatFor),
         "i"  -> s.roundInterval.toSeconds.toInt,
         "p"  -> s.password,
-        "o"  -> s.conditions.ifNonEmpty,
+        "o"  -> s.conditions,
         "fp" -> s.forbiddenPairings.some.filter(_.nonEmpty),
         "mp" -> s.manualPairings.some.filter(_.nonEmpty)
       )
@@ -116,7 +116,7 @@ object BsonHandlers:
   // "featurable" mostly means that the tournament isn't over yet
   def addFeaturable(s: Swiss): Bdoc =
     bsonWriteObjTry[Swiss](s).get ++ {
-      s.isNotFinished ?? $doc(
+      s.isNotFinished so $doc(
         "featurable" -> true,
         "garbage"    -> s.unrealisticSettings.option(true)
       )

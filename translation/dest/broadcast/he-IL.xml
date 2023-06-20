@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="broadcasts">הקרנות</string>
+  <plurals name="nbBroadcasts">
+    <item quantity="one">הקרנה %s</item>
+    <item quantity="two">%s הקרנות</item>
+    <item quantity="many">%s הקרנות</item>
+    <item quantity="other">%s הקרנות</item>
+  </plurals>
   <string name="liveBroadcasts">צפייה ישירה בטורנירים</string>
   <string name="newBroadcast">הקרנה ישירה חדשה</string>
   <string name="addRound">הוספת סבב</string>
@@ -25,6 +31,7 @@
   <string name="currentRoundUrl">הקישור לסבב הנוכחי</string>
   <string name="currentGameUrl">הקישור למשחק הנוכחי</string>
   <string name="downloadAllRounds">הורדת כל הסבבים</string>
-  <string name="definitivelyDeleteRound" comment="definitivelyDeleteRound&#10;&#10;Refers to live tournaments being broadcast on lichess&#10;&#10;Description (also translateable): Delete all games of this round. The source will need to be active in order to re-create them.">מחיקת הסבב הזה והמשחקים שבו לצמיתות</string>
+  <string name="definitivelyDeleteRound">מחיקת הסבב הזה והמשחקים שבו לצמיתות</string>
   <string name="deleteAllGamesOfThisRound">מחיקת כל המשחקים בסבב הזה. כדי ליצור אותם מחדש, קישור המקור צריך להיות פעיל.</string>
+  <string name="editRoundStudy">עריכת לוח הלמידה של הסבב</string>
 </resources>

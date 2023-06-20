@@ -1,57 +1,50 @@
 package lila.puzzle
 
 import lila.db.dsl.*
-import lila.user.User
+import lila.user.Me
 
-// mobile app BC
+// mobile app
 final class PuzzleBatch(colls: PuzzleColls, anonApi: PuzzleAnon, pathApi: PuzzlePathApi)(using
     Executor
 ):
 
   import BsonHandlers.given
 
-  def nextFor(user: Option[User], difficulty: PuzzleDifficulty, nb: Int): Fu[Vector[Puzzle]] =
-    nextFor(user, PuzzleAngle.mix, difficulty, nb)
+  def nextForMe(difficulty: PuzzleDifficulty, nb: Int)(using Option[Me]): Fu[Vector[Puzzle]] =
+    nextForMe(PuzzleAngle.mix, difficulty, nb)
 
-  def nextFor(
-      user: Option[User],
+  def nextForMe(
       angle: PuzzleAngle,
       difficulty: PuzzleDifficulty,
       nb: Int
-  ): Fu[Vector[Puzzle]] = (nb > 0) ?? {
-    user.fold(anonApi.getBatchFor(angle, nb)) { user =>
+  )(using me: Option[Me]): Fu[Vector[Puzzle]] = (nb > 0).so:
+    me.fold(anonApi.getBatchFor(angle, difficulty, nb)): me =>
       val tier =
-        if user.perfs.puzzle.nb > 5000 then PuzzleTier.good
+        if me.perfs.puzzle.nb > 5000 then PuzzleTier.good
         else if PuzzleDifficulty.isExtreme(difficulty) then PuzzleTier.good
         else PuzzleTier.top
       pathApi
-        .nextFor(user, angle, tier, difficulty, Set.empty)
-        .orFail(s"No puzzle path for ${user.id} $tier")
-        .flatMap { pathId =>
-          colls.path {
-            _.aggregateList(nb) { framework =>
+        .nextFor(me, angle, tier, difficulty, Set.empty)
+        .orFail(s"No puzzle path for ${me.username} $tier")
+        .flatMap: pathId =>
+          colls.path:
+            _.aggregateList(nb): framework =>
               import framework.*
               Match($id(pathId)) -> List(
                 Project($doc("puzzleId" -> "$ids", "_id" -> false)),
                 Unwind("puzzleId"),
                 Sample(nb),
-                PipelineOperator(
+                PipelineOperator:
                   $lookup.simple(
                     from = colls.puzzle,
                     local = "puzzleId",
                     foreign = "_id",
                     as = "puzzle"
                   )
-                ),
-                PipelineOperator(
+                ,
+                PipelineOperator:
                   $doc("$replaceWith" -> $doc("$arrayElemAt" -> $arr("$puzzle", 0)))
-                )
               )
-            }.map {
+            .map:
               _.view.flatMap(puzzleReader.readOpt).toVector
-            }
-          }
-        }
         .mon(_.puzzle.selector.user.batch(nb = nb))
-    }
-  }

@@ -2,28 +2,27 @@ package lila.tournament
 
 import cats.syntax.all.*
 import chess.format.Fen
-import chess.{ Clock, Mode, StartingPosition }
+import chess.{ Clock, Mode }
 import chess.Clock.{ LimitSeconds, IncrementSeconds }
 import play.api.data.*
 import play.api.data.Forms.*
-import play.api.data.validation
-import play.api.data.validation.Constraint
 import scala.util.chaining.*
 
 import lila.common.Form.{ *, given }
 import lila.hub.LeaderTeam
-import lila.hub.LightTeam.*
-import lila.user.User
+import lila.user.Me
+import lila.gathering.GatheringClock
 
 final class TournamentForm:
 
   import TournamentForm.*
+  import GatheringClock.*
 
-  def create(user: User, leaderTeams: List[LeaderTeam], teamBattleId: Option[TeamId] = None) =
-    form(user, leaderTeams, none) fill TournamentSetup(
-      name = teamBattleId.isEmpty option user.titleUsername,
-      clockTime = clockTimeDefault,
-      clockIncrement = clockIncrementDefault,
+  def create(leaderTeams: List[LeaderTeam], teamBattleId: Option[TeamId] = None)(using me: Me) =
+    form(leaderTeams, none) fill TournamentSetup(
+      name = teamBattleId.isEmpty option me.titleUsername,
+      clockTime = timeDefault,
+      clockIncrement = incrementDefault,
       minutes = minuteDefault,
       waitMinutes = waitMinuteDefault.some,
       startDate = none,
@@ -32,7 +31,7 @@ final class TournamentForm:
       password = None,
       mode = none,
       rated = true.some,
-      conditions = Condition.DataForm.AllSetup.default,
+      conditions = TournamentCondition.All.empty,
       teamBattleByTeam = teamBattleId,
       berserkable = true.some,
       streakable = true.some,
@@ -40,8 +39,8 @@ final class TournamentForm:
       hasChat = true.some
     )
 
-  def edit(user: User, leaderTeams: List[LeaderTeam], tour: Tournament) =
-    form(user, leaderTeams, tour.some) fill TournamentSetup(
+  def edit(leaderTeams: List[LeaderTeam], tour: Tournament)(using Me) =
+    form(leaderTeams, tour.some) fill TournamentSetup(
       name = tour.name.some,
       clockTime = tour.clock.limitInMinutes,
       clockIncrement = tour.clock.incrementSeconds,
@@ -53,7 +52,7 @@ final class TournamentForm:
       mode = none,
       rated = tour.mode.rated.some,
       password = tour.password,
-      conditions = Condition.DataForm.AllSetup(tour.conditions),
+      conditions = tour.conditions,
       teamBattleByTeam = none,
       berserkable = tour.berserkable.some,
       streakable = tour.streakable.some,
@@ -61,12 +60,10 @@ final class TournamentForm:
       hasChat = tour.hasChat.some
     )
 
-  private val blockList = List("lichess", "liсhess")
-
-  private def form(user: User, leaderTeams: List[LeaderTeam], prev: Option[Tournament]) =
-    Form {
-      makeMapping(user, leaderTeams) pipe { m =>
-        prev.fold(m) { tour =>
+  private def form(leaderTeams: List[LeaderTeam], prev: Option[Tournament])(using Me) =
+    Form:
+      makeMapping(leaderTeams).pipe: m =>
+        prev.fold(m): tour =>
           m
             .verifying(
               "Can't change variant after players have joined",
@@ -76,17 +73,14 @@ final class TournamentForm:
               "Can't change time control after players have joined",
               _.speed == tour.speed || tour.nbPlayers == 0
             )
-        }
-      }
-    }
 
-  private def makeMapping(user: User, leaderTeams: List[LeaderTeam]) =
+  private def makeMapping(leaderTeams: List[LeaderTeam])(using me: Me) =
     mapping(
-      "name"           -> optional(eventName(2, 30, user.isVerifiedOrAdmin)),
-      "clockTime"      -> numberInDouble(clockTimeChoices),
-      "clockIncrement" -> numberIn(clockIncrementChoices).into[IncrementSeconds],
+      "name"           -> optional(eventName(2, 30, me.isVerifiedOrAdmin)),
+      "clockTime"      -> numberInDouble(timeChoices),
+      "clockIncrement" -> numberIn(incrementChoices).into[IncrementSeconds],
       "minutes" -> {
-        if (lila.security.Granter(_.ManageTournament)(user)) number
+        if lila.security.Granter(_.ManageTournament) then number
         else numberIn(minuteChoices)
       },
       "waitMinutes" -> optional(numberIn(waitMinuteChoices)),
@@ -96,7 +90,7 @@ final class TournamentForm:
       "mode"        -> optional(number.verifying(Mode.all.map(_.id) contains _)), // deprecated, use rated
       "rated"       -> optional(boolean),
       "password"    -> optional(cleanNonEmptyText),
-      "conditions"  -> Condition.DataForm.all(leaderTeams),
+      "conditions"  -> TournamentCondition.form.all(leaderTeams),
       "teamBattleByTeam" -> optional(of[TeamId].verifying(id => leaderTeams.exists(_.id == id))),
       "berserkable"      -> optional(boolean),
       "streakable"       -> optional(boolean),
@@ -112,22 +106,6 @@ object TournamentForm:
 
   import chess.variant.*
 
-  val clockTimes: Seq[Double] = Seq(0d, 1 / 4d, 1 / 2d, 3 / 4d, 1d, 3 / 2d) ++ {
-    (2 to 8 by 1) ++ (10 to 30 by 5) ++ (40 to 60 by 10)
-  }.map(_.toDouble)
-  val clockTimeDefault = 2d
-  private def formatLimit(l: Double) =
-    Clock.Config(LimitSeconds((l * 60).toInt), IncrementSeconds(0)).limitString + {
-      if (l <= 1) " minute" else " minutes"
-    }
-  val clockTimeChoices = optionsDouble(clockTimes, formatLimit)
-
-  val clockIncrements = IncrementSeconds from {
-    (0 to 2 by 1) ++ (3 to 7) ++ (10 to 30 by 5) ++ (40 to 60 by 10)
-  }
-  val clockIncrementDefault = IncrementSeconds(0)
-  val clockIncrementChoices = options(IncrementSeconds raw clockIncrements, "%d second{s}")
-
   val minutes       = (20 to 60 by 5) ++ (70 to 120 by 10) ++ (150 to 360 by 30) ++ (420 to 600 by 60) :+ 720
   val minuteDefault = 45
   val minuteChoices = options(minutes, "%d minute{s}")
@@ -140,18 +118,15 @@ object TournamentForm:
     List(Standard, Chess960, KingOfTheHill, ThreeCheck, Antichess, Atomic, Horde, RacingKings, Crazyhouse)
 
   def guessVariant(from: String): Option[Variant] =
-    validVariants.find { v =>
+    validVariants.find: v =>
       v.key.value == from || from.toIntOption.exists(v.id.value == _)
-    }
 
-  val joinForm =
-    Form(
-      mapping(
-        "team"       -> optional(nonEmptyText.into[TeamId]),
-        "password"   -> optional(nonEmptyText),
-        "pairMeAsap" -> optional(boolean)
-      )(TournamentJoin.apply)(unapply)
-    )
+  val joinForm = Form:
+    mapping(
+      "team"       -> optional(nonEmptyText.into[TeamId]),
+      "password"   -> optional(nonEmptyText),
+      "pairMeAsap" -> optional(boolean)
+    )(TournamentJoin.apply)(unapply)
 
   case class TournamentJoin(
       team: Option[TeamId],
@@ -171,7 +146,7 @@ private[tournament] case class TournamentSetup(
     mode: Option[Int], // deprecated, use rated
     rated: Option[Boolean],
     password: Option[String],
-    conditions: Condition.DataForm.AllSetup,
+    conditions: TournamentCondition.All,
     teamBattleByTeam: Option[TeamId],
     berserkable: Option[Boolean],
     streakable: Option[Boolean],
@@ -222,7 +197,7 @@ private[tournament] case class TournamentSetup(
         variant = newVariant,
         startsAt = startDate | old.startsAt,
         password = password,
-        position = newVariant.standard ?? {
+        position = newVariant.standard so {
           if (old.isCreated || old.position.isDefined) realPosition
           else old.position
         },
@@ -246,7 +221,7 @@ private[tournament] case class TournamentSetup(
         variant = newVariant,
         startsAt = startDate | old.startsAt,
         password = password.fold(old.password)(_.some.filter(_.nonEmpty)),
-        position = newVariant.standard ?? {
+        position = newVariant.standard so {
           if (position.isDefined && (old.isCreated || old.position.isDefined)) realPosition
           else old.position
         },

@@ -1,6 +1,5 @@
 package views.html.video
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -12,7 +11,7 @@ object layout:
       title: String,
       control: lila.video.UserControl,
       openGraph: Option[lila.app.ui.OpenGraph] = None
-  )(body: Modifier*)(implicit ctx: Context) =
+  )(body: Modifier*)(using WebContext) =
     views.html.base.layout(
       title = title,
       moreCss = cssTag("video"),
@@ -42,7 +41,7 @@ object layout:
             if (control.filter.tags.nonEmpty)
               a(cls := "button button-empty", href := routes.Video.index)("Clear search")
             else
-              a(dataIcon := "", href := routes.Video.tags)("View more tags")
+              a(dataIcon := licon.Tag, href := routes.Video.tags)("View more tags")
           )
         ),
         div(cls := "page-menu__content box")(body)

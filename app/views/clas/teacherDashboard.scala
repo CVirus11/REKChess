@@ -3,7 +3,6 @@ package views.html.clas
 import controllers.clas.routes.{ Clas as clasRoutes }
 import controllers.routes
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.clas.{ Clas, ClasInvite, ClasProgress, Student }
@@ -16,11 +15,11 @@ object teacherDashboard:
       c: Clas,
       students: List[Student.WithUser],
       active: String
-  )(modifiers: Modifier*)(using Context) =
+  )(modifiers: Modifier*)(using WebContext) =
     bits.layout(c.name, Left(c withStudents students.map(_.student)))(
       cls := s"clas-show dashboard dashboard-teacher dashboard-teacher-$active",
       div(cls := "clas-show__top")(
-        h1(dataIcon := "", cls := "text")(c.name),
+        h1(dataIcon := licon.Group, cls := "text")(c.name),
         st.nav(cls := "dashboard-nav")(
           a(cls := active.active("overview"), href := clasRoutes.show(c.id.value))(trans.clas.overview()),
           a(cls := active.active("wall"), href := clasRoutes.wall(c.id.value))(trans.clas.news()),
@@ -49,7 +48,7 @@ object teacherDashboard:
   def overview(
       c: Clas,
       students: List[Student.WithUser]
-  )(using Context) =
+  )(using WebContext) =
     layout(c, students, "overview")(
       div(cls := "clas-show__overview")(
         c.desc.trim.nonEmpty option div(cls := "clas-show__desc")(richText(c.desc)),
@@ -58,48 +57,40 @@ object teacherDashboard:
           a(
             href     := clasRoutes.studentForm(c.id.value),
             cls      := "button button-clas text",
-            dataIcon := ""
+            dataIcon := licon.PlusButton
           )(trans.clas.addStudent())
         )
       ),
-      if (students.isEmpty)
-        p(cls := "box__pad students__empty")(trans.clas.noStudents())
-      else
-        studentList(c, students)
+      if students.isEmpty
+      then p(cls := "box__pad students__empty")(trans.clas.noStudents())
+      else studentList(c, students)
     )
 
   def students(
       c: Clas,
       all: List[Student.WithUser],
       invites: List[ClasInvite]
-  )(using Context) =
-    layout(c, all.filter(_.student.isActive), "students") {
+  )(using WebContext) =
+    layout(c, all.filter(_.student.isActive), "students"):
       val archived = all.filter(_.student.isArchived)
       val inviteBox =
-        if (invites.isEmpty)
-          div(cls := "box__pad invites__empty")(h2(trans.clas.nbPendingInvitations(0)))
+        if invites.isEmpty
+        then div(cls := "box__pad invites__empty")(h2(trans.clas.nbPendingInvitations(0)))
         else
           div(cls := "box__pad invites")(
             h2(trans.clas.nbPendingInvitations.pluralSame(invites.size)),
-            table(cls := "slist")(
-              tbody(
-                invites.map { i =>
+            table(cls := "slist"):
+              tbody:
+                invites.map: i =>
                   tr(
                     td(userIdLink(i.userId.some)),
                     td(i.realName),
-                    td(
-                      if (i.accepted has false) "Declined" else "Pending"
-                    ),
+                    td(if i.accepted has false then "Declined" else "Pending"),
                     td(momentFromNow(i.created.at)),
-                    td(
-                      postForm(action := clasRoutes.invitationRevoke(i._id.value))(
+                    td:
+                      postForm(action := clasRoutes.invitationRevoke(i._id.value)):
                         submitButton(cls := "button button-red button-empty")("Revoke")
-                      )
-                    )
                   )
-                }
-              )
-            )
           )
       val archivedBox =
         if (archived.isEmpty)
@@ -110,9 +101,8 @@ object teacherDashboard:
             studentList(c, archived)
           )
       frag(inviteBox, archivedBox)
-    }
 
-  def unreasonable(c: Clas, students: List[Student.WithUser], active: String)(using Context) =
+  def unreasonable(c: Clas, students: List[Student.WithUser], active: String)(using WebContext) =
     layout(c, students, active)(
       div(cls := "box__pad students__empty")(
         p(
@@ -132,7 +122,7 @@ object teacherDashboard:
       c: Clas,
       students: List[Student.WithUser],
       progress: ClasProgress
-  )(using Context) =
+  )(using WebContext) =
     layout(c, students, "progress")(
       progressHeader(c, progress.some),
       div(cls := "students")(
@@ -187,7 +177,7 @@ object teacherDashboard:
       basicCompletion: Map[UserId, Int],
       practiceCompletion: Map[UserId, Int],
       coordScores: Map[UserId, chess.ByColor[Int]]
-  )(using Context) =
+  )(using WebContext) =
     layout(c, students, "progress")(
       progressHeader(c, none),
       div(cls := "students")(
@@ -226,7 +216,7 @@ object teacherDashboard:
       )
     )
 
-  private def progressHeader(c: Clas, progress: Option[ClasProgress])(using Context) =
+  private def progressHeader(c: Clas, progress: Option[ClasProgress])(using WebContext) =
     div(cls := "progress")(
       div(cls := "progress-perf")(
         label(trans.variant()),
@@ -264,7 +254,7 @@ object teacherDashboard:
       }
     )
 
-  private def studentList(c: Clas, students: List[Student.WithUser])(using Context) =
+  private def studentList(c: Clas, students: List[Student.WithUser])(using WebContext) =
     div(cls := "students")(
       table(cls := "slist slist-pad sortable")(
         thead(
@@ -274,7 +264,7 @@ object teacherDashboard:
             dataSortNumberTh(trans.games()),
             dataSortNumberTh(trans.puzzles()),
             dataSortNumberTh(trans.clas.lastActiveDate()),
-            th(iconTag("")(title := trans.clas.managed.txt()))
+            th(iconTag(licon.Shield)(title := trans.clas.managed.txt()))
           )
         ),
         tbody(
@@ -289,7 +279,7 @@ object teacherDashboard:
               td(dataSort := user.seenAt.map(_.toMillis.toString))(user.seenAt.map(momentFromNowOnce)),
               td(
                 dataSort := (if (student.managed) 1 else 0),
-                student.managed option iconTag("")(title := trans.clas.managed.txt())
+                student.managed option iconTag(licon.Shield)(title := trans.clas.managed.txt())
               )
             )
           }
@@ -297,7 +287,7 @@ object teacherDashboard:
       )
     )
 
-  private def studentTd(c: Clas, s: Student.WithUser)(using Context) =
+  private def studentTd(c: Clas, s: Student.WithUser)(using WebContext) =
     td(
       a(href := clasRoutes.studentShow(c.id.value, s.user.username))(
         userSpan(

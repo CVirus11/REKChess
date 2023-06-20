@@ -1,4 +1,5 @@
 import { h, VNode } from 'snabbdom';
+import * as licon from 'common/licon';
 import { spinnerVdom as spinner } from 'common/spinner';
 import { bind, dataIcon } from 'common/snabbdom';
 import { numberRow, playerName, player as renderPlayer } from './util';
@@ -36,7 +37,9 @@ export default function (ctrl: TournamentController): VNode {
     return h(tag, [h('div.stats', [playerTitle(ctrl.playerInfo.player!), spinner()])]);
   const nb = data.player.nb,
     pairingsLen = data.pairings.length,
-    avgOp = pairingsLen ? Math.round(data.pairings.reduce((a, b) => a + b.op.rating, 0) / pairingsLen) : undefined;
+    avgOp = pairingsLen
+      ? Math.round(data.pairings.reduce((a, b) => a + b.op.rating, 0) / pairingsLen)
+      : undefined;
   return h(
     tag,
     {
@@ -49,7 +52,7 @@ export default function (ctrl: TournamentController): VNode {
     },
     [
       h('a.close', {
-        attrs: dataIcon(''),
+        attrs: dataIcon(licon.X),
         hook: bind('click', () => ctrl.showPlayerInfo(data.player), ctrl.redraw),
       }),
       h('div.stats', [

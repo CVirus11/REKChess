@@ -1,6 +1,5 @@
 package views.html.mod
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -13,7 +12,7 @@ object publicChat:
   def apply(
       tourChats: List[(lila.tournament.Tournament, UserChat)],
       swissChats: List[(lila.swiss.Swiss, UserChat)]
-  )(using Context) =
+  )(using WebContext) =
     views.html.base.layout(
       title = "Public Chats",
       moreCss = cssTag("mod.publicChats"),
@@ -58,7 +57,7 @@ object publicChat:
   private val dataRoom = attr("data-room")
   private val dataChan = attr("data-chan")
 
-  private def chatOf(titleFragment: Frag, chat: UserChat)(using Context) =
+  private def chatOf(titleFragment: Frag, chat: UserChat)(using WebContext) =
     frag(
       titleFragment,
       div(cls := "chat")(

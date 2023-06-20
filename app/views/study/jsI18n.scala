@@ -12,7 +12,7 @@ object jsI18n:
       i18nJsObject(i18nKeys ++ gamebookPlayKeys)
 
   def embed(chapter: lila.study.Chapter)(using Lang) =
-    views.html.board.userAnalysisI18n() ++ chapter.isGamebook.?? {
+    views.html.board.userAnalysisI18n() ++ chapter.isGamebook.so {
       i18nJsObject(gamebookPlayKeys)
     }
 
@@ -107,7 +107,6 @@ object jsI18n:
       urlOfTheGame,
       loadAGameFromXOrY,
       createChapter,
-      configureLiveBroadcast,
       createStudy,
       editStudy,
       visibility,

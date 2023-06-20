@@ -5,7 +5,7 @@ import com.softwaremill.macwire.*
 import play.api.libs.ws.StandaloneWSClient
 import play.api.{ Configuration, Mode }
 
-import lila.chat.GetLinkCheck
+import lila.chat.{ GetLinkCheck, IsChatFresh }
 import lila.common.Bus
 import lila.common.config.*
 import lila.hub.actorApi.Announce
@@ -13,7 +13,6 @@ import lila.hub.actorApi.lpv.*
 import lila.user.User
 
 @Module
-@annotation.nowarn("msg=unused")
 final class Env(
     appConfig: Configuration,
     net: NetConfig,
@@ -24,7 +23,6 @@ final class Env(
     forumEnv: lila.forum.Env,
     teamEnv: lila.team.Env,
     puzzleEnv: lila.puzzle.Env,
-    explorerEnv: lila.explorer.Env,
     fishnetEnv: lila.fishnet.Env,
     studyEnv: lila.study.Env,
     studySearchEnv: lila.studySearch.Env,
@@ -58,7 +56,6 @@ final class Env(
     ublogApi: lila.ublog.UblogApi,
     picfitUrl: lila.memo.PicfitUrl,
     cacheApi: lila.memo.CacheApi,
-    mongoCacheApi: lila.memo.MongoCache.Api,
     ws: StandaloneWSClient,
     val mode: Mode
 )(using
@@ -110,6 +107,7 @@ final class Env(
   if (mode == Mode.Prod) scheduler.scheduleOnce(5 seconds)(influxEvent.start())
 
   private lazy val linkCheck = wire[LinkCheck]
+  lazy val chatFreshness     = wire[ChatFreshness]
 
   private lazy val pagerDuty = wire[PagerDuty]
 
@@ -117,19 +115,22 @@ final class Env(
     "chatLinkCheck" -> { case GetLinkCheck(line, source, promise) =>
       promise completeWith linkCheck(line, source)
     },
+    "chatFreshness" -> { case IsChatFresh(source, promise) =>
+      promise completeWith chatFreshness.of(source)
+    },
     "announce" -> {
       case Announce(msg, date, _) if msg contains "will restart" => pagerDuty.lilaRestart(date).unit
     },
     "lpv" -> {
       case GamePgnsFromText(text, p)      => p completeWith textLpvExpand.gamePgnsFromText(text)
+      case AllPgnsFromText(text, p)       => p completeWith textLpvExpand.allPgnsFromText(text)
       case LpvLinkRenderFromText(text, p) => p completeWith textLpvExpand.linkRenderFromText(text)
     }
   )
 
-  scheduler.scheduleWithFixedDelay(1 minute, 1 minute) { () =>
-    lila.mon.bus.classifiers.update(lila.common.Bus.size).unit
+  scheduler.scheduleWithFixedDelay(1 minute, 1 minute): () =>
+    lila.mon.bus.classifiers.update(lila.common.Bus.size()).unit
     lila.mon.jvm.threads()
     // ensure the Lichess user is online
     socketEnv.remoteSocket.onlineUserIds.getAndUpdate(_ + User.lichessId)
     userEnv.repo.setSeenAt(User.lichessId)
-  }

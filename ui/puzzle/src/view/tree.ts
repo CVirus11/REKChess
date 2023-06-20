@@ -3,7 +3,8 @@ import { defined } from 'common';
 import throttle from 'common/throttle';
 import { renderEval as normalizeEval } from 'ceval';
 import { path as treePath } from 'tree';
-import { Controller, MaybeVNode, MaybeVNodes } from '../interfaces';
+import { Controller } from '../interfaces';
+import { MaybeVNode, MaybeVNodes } from 'common/snabbdom';
 
 interface Ctx {
   ctrl: Controller;
@@ -161,7 +162,11 @@ export function renderMove(ctx: Ctx, node: Tree.Node): MaybeVNodes {
   return [
     node.san,
     ev &&
-      (defined(ev.cp) ? renderEval(normalizeEval(ev.cp)) : defined(ev.mate) ? renderEval('#' + ev.mate) : undefined),
+      (defined(ev.cp)
+        ? renderEval(normalizeEval(ev.cp))
+        : defined(ev.mate)
+        ? renderEval('#' + ev.mate)
+        : undefined),
     puzzleGlyph(ctx, node),
   ];
 }

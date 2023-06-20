@@ -9,10 +9,12 @@ lichess.load.then(() => {
   if (username != usernameNoteStore.get()) noteStore.remove();
   usernameNoteStore.set(username);
   const noteTextArea = $('#inquiry .notes').find('textarea')[0] as HTMLTextAreaElement;
+  const syncNoteValue = () => (noteTextArea.value = noteStore.get() || '');
+  let hasSeenNonEmptyNoteWarning = false;
 
   $('#inquiry .notes').on('mouseenter', () => {
+    syncNoteValue();
     noteTextArea.focus();
-    noteTextArea.value = noteStore.get() || '';
   });
 
   const loadNotes = () => {
@@ -33,6 +35,11 @@ lichess.load.then(() => {
     });
   };
   loadNotes();
+  const flashNotes = (warning = false) => {
+    const flashClass = warning ? 'note-flash warning' : 'note-flash';
+    const notes = $('#inquiry .notes > span').addClass(flashClass);
+    setTimeout(() => notes.removeClass(flashClass), 100);
+  };
 
   $('#inquiry .costello').on('click', () => {
     $('#inquiry').toggleClass('hidden');
@@ -50,15 +57,32 @@ lichess.load.then(() => {
     nextStore.set(this.checked);
     $('#inquiry input.auto-next').val(this.checked ? '1' : '0');
   });
+  $('#inquiry .actions.close').on('click', function (this: HTMLInputElement) {
+    if (noteStore.get() && !hasSeenNonEmptyNoteWarning) {
+      event!.preventDefault();
+      const readTime = 1000;
+      setTimeout(() => (hasSeenNonEmptyNoteWarning = true), readTime);
+      flashNotes(true);
+      syncNoteValue();
+      const $noteDiv = $($('#inquiry .notes').find('div')[0]);
+      $noteDiv.css('display', 'block');
+      setTimeout(() => $noteDiv.css('display', ''), readTime);
+    }
+  });
 
-  window.Mousetrap.bind('d', () => $('#inquiry .actions.close form.process button[type="submit"]').trigger('click'));
+  window.Mousetrap.bind('d', () =>
+    $('#inquiry .actions.close form.process button[type="submit"]').trigger('click')
+  );
 
   $('#inquiry .atom p').each(function (this: HTMLParagraphElement) {
     $(this).html(
       expandMentions(
         $(this)
           .html()
-          .replace(/(?:https:\/\/)?lichess\.org\/((?:[\w\/:(&;)=@-]|[?.]\w)+)/gi, '<a href="/$1">lichess.org/$1</a>')
+          .replace(
+            /(?:https:\/\/)?lichess\.org\/((?:[\w\/:(&;)=@-]|[?.]\w)+)/gi,
+            '<a href="/$1">lichess.org/$1</a>'
+          )
       )
     );
   });
@@ -70,7 +94,6 @@ lichess.load.then(() => {
     const message = $(this).find('.message').text();
     const storedNote = noteStore.get();
     noteStore.set((storedNote ? storedNote + '\n' : '') + `${username}: "${message}"`);
-    const notes = $('#inquiry .notes span').addClass('flash');
-    setTimeout(() => notes.removeClass('flash'), 100);
+    flashNotes();
   });
 });

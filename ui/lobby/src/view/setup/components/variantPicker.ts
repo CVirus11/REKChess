@@ -5,8 +5,8 @@ import { variantsBlindMode, variants, variantsForGameType } from '../../../optio
 import { option } from './option';
 
 export const variantPicker = (ctrl: LobbyController) => {
-  const { trans, setupCtrl, opts } = ctrl;
-  const baseVariants = opts.blindMode ? variantsBlindMode : variants;
+  const { trans, setupCtrl } = ctrl;
+  const baseVariants = lichess.blindMode ? variantsBlindMode : variants;
   return h('div.variant.label-select', [
     h('label', { attrs: { for: 'sf_variant' } }, trans('variant')),
     h(
@@ -17,7 +17,9 @@ export const variantPicker = (ctrl: LobbyController) => {
         },
         hook: onInsert<HTMLSelectElement>(element => element.focus()),
       },
-      variantsForGameType(baseVariants, setupCtrl.gameType!).map(variant => option(variant, setupCtrl.variant()))
+      variantsForGameType(baseVariants, setupCtrl.gameType!).map(variant =>
+        option(variant, setupCtrl.variant())
+      )
     ),
   ]);
 };

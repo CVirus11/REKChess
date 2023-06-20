@@ -6,11 +6,11 @@ import ornicar.scalalib.newtypes.*
 trait LilaUserId:
 
   trait UserIdOf[U]:
-    def apply(a: U): UserId
-
-  extension [U](u: U)(using idOf: UserIdOf[U])
-    inline def id: UserId                = idOf(u)
-    inline def is[T: UserIdOf](other: T) = u.id == other.id
+    def apply(u: U): UserId
+    extension (u: U)
+      inline def id: UserId                  = apply(u)
+      inline def is[T: UserIdOf](other: T)   = u.id == other.id
+      inline def isnt[T: UserIdOf](other: T) = u.id != other.id
 
   opaque type UserId = String
   object UserId extends OpaqueString[UserId]:
@@ -31,10 +31,9 @@ trait LilaUserId:
   opaque type UserStr = String
   object UserStr extends OpaqueString[UserStr]:
     given UserIdOf[UserStr] = n => UserId(n.value.toLowerCase)
-    def read(str: String): Option[UserStr] = {
+    def read(str: String): Option[UserStr] =
       val clean = str.trim.takeWhile(' ' !=)
       if clean.lengthIs > 1 then Some(UserStr(clean)) else None
-    }
 
   opaque type UserStrOrEmail = String
   object UserStrOrEmail extends OpaqueString[UserStrOrEmail]:

@@ -1,4 +1,5 @@
 import { h, VNode } from 'snabbdom';
+import * as licon from 'common/licon';
 import Ctrl from './ctrl';
 import { Chart } from './interfaces';
 import type * as Highcharts from 'highcharts';
@@ -116,7 +117,8 @@ function makeChart(el: HTMLElement, data: Chart) {
         shared: true,
       } as Highcharts.SeriesTooltipOptions,
     };
-    if (data.valueYaxis.name === 'Game result') c.color = resultColors[s.name as 'Victory' | 'Draw' | 'Defeat'];
+    if (data.valueYaxis.name === 'Game result')
+      c.color = resultColors[s.name as 'Victory' | 'Draw' | 'Defeat'];
     return c;
   });
   const chartConf: Highcharts.Options = {
@@ -164,7 +166,8 @@ function makeChart(el: HTMLElement, data: Chart) {
       const isPercent = data.valueYaxis.dataType === 'percent';
       const isSize = i % 2 === 1;
       const isStack = data.series[0].stack;
-      const isAuto = isSize || ['acpl', 'blurs', 'timeVariance', 'accuracy', 'movetime'].includes(data.question.metric);
+      const isAuto =
+        isSize || ['acpl', 'blurs', 'timeVariance', 'accuracy', 'movetime'].includes(data.question.metric);
       const c: Highcharts.AxisOptions = {
         opposite: isSize,
         min: isAuto ? undefined : isStack ? 0 : Math.min(...data.series[0].data),
@@ -254,7 +257,7 @@ function makeChart(el: HTMLElement, data: Chart) {
 function empty(txt: string) {
   return h('div.chart.empty', [
     h('i', {
-      attrs: { 'data-icon': '' },
+      attrs: { 'data-icon': licon.Target },
     }),
     txt,
   ]);

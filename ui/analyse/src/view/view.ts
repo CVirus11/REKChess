@@ -1,6 +1,7 @@
 import { view as cevalView } from 'ceval';
 import { parseFen } from 'chessops/fen';
 import { defined } from 'common';
+import * as licon from 'common/licon';
 import { bind, bindNonPassive, MaybeVNode, onInsert, dataIcon, iconTag } from 'common/snabbdom';
 import { bindMobileMousedown, isMobile } from 'common/mobile';
 import { playable } from 'game';
@@ -29,7 +30,7 @@ import serverSideUnderboard from '../serverSideUnderboard';
 import { StudyCtrl } from '../study/interfaces';
 import { render as renderTreeView } from '../treeView/treeView';
 import { spinnerVdom as spinner } from 'common/spinner';
-import stepwiseScroll from 'common/wheel';
+import { stepwiseScroll } from 'common/scroll';
 import type * as studyDeps from '../study/studyDeps';
 import { renderNextChapter } from '../study/nextChapter';
 import * as Prefs from 'common/prefs';
@@ -123,7 +124,8 @@ function inputs(ctrl: AnalyseCtrl): VNode | undefined {
               el.addEventListener('input', () => (ctrl.pgnInput = el.value));
 
               el.addEventListener('keypress', (e: KeyboardEvent) => {
-                if (e.key != 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || isMobile()) return;
+                if (e.key != 'Enter' || e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || isMobile())
+                  return;
                 else if (changePgnIfDifferent()) e.preventDefault();
               });
               if (isMobile()) el.addEventListener('focusout', changePgnIfDifferent);
@@ -140,7 +142,7 @@ function inputs(ctrl: AnalyseCtrl): VNode | undefined {
           : h(
               'button.button.button-thin.action.text',
               {
-                attrs: dataIcon(''),
+                attrs: dataIcon(licon.PlayTriangle),
                 hook: bind('click', _ => {
                   const pgn = $('.copyables .pgn textarea').val() as string;
                   if (pgn !== pgnExport.renderFullTxt(ctrl)) ctrl.changePgn(pgn, true);
@@ -161,27 +163,23 @@ function controls(ctrl: AnalyseCtrl) {
   return h(
     'div.analyse__controls.analyse-controls',
     {
-      hook: onInsert(el => {
-        bindMobileMousedown(
-          el,
-          e => {
-            const action = dataAct(e);
-            if (action === 'prev' || action === 'next') repeater(ctrl, action, e);
-            else if (action === 'first') control.first(ctrl);
-            else if (action === 'last') control.last(ctrl);
-            else if (action === 'explorer') ctrl.toggleExplorer();
-            else if (action === 'practice') ctrl.togglePractice();
-            else if (action === 'menu') ctrl.actionMenu.toggle();
-            else if (action === 'analysis' && ctrl.studyPractice)
-              window.open(ctrl.studyPractice.analysisUrl(), '_blank', 'noopener');
-            else if (action === 'persistence') {
-              ctrl.persistence?.autoOpen(false);
-              ctrl.togglePersistence();
-            }
-          },
-          ctrl.redraw
-        );
-      }),
+      hook: onInsert(
+        bindMobileMousedown(e => {
+          const action = dataAct(e);
+          if (action === 'prev' || action === 'next') repeater(ctrl, action, e);
+          else if (action === 'first') control.first(ctrl);
+          else if (action === 'last') control.last(ctrl);
+          else if (action === 'explorer') ctrl.toggleExplorer();
+          else if (action === 'practice') ctrl.togglePractice();
+          else if (action === 'menu') ctrl.actionMenu.toggle();
+          else if (action === 'analysis' && ctrl.studyPractice)
+            window.open(ctrl.studyPractice.analysisUrl(), '_blank', 'noopener');
+          else if (action === 'persistence') {
+            ctrl.persistence?.autoOpen(false);
+            ctrl.togglePersistence();
+          }
+        }, ctrl.redraw)
+      ),
     },
     [
       ctrl.embed
@@ -194,7 +192,7 @@ function controls(ctrl: AnalyseCtrl) {
                     attrs: {
                       title: noarg('analysis'),
                       'data-act': 'analysis',
-                      'data-icon': '',
+                      'data-icon': licon.Microscope,
                     },
                   }),
                 ]
@@ -203,7 +201,7 @@ function controls(ctrl: AnalyseCtrl) {
                     attrs: {
                       title: noarg('openingExplorerAndTablebase'),
                       'data-act': 'explorer',
-                      'data-icon': '',
+                      'data-icon': licon.Book,
                     },
                     class: {
                       hidden: menuIsOpen || !ctrl.explorer.allowed() || !!ctrl.retro,
@@ -215,7 +213,7 @@ function controls(ctrl: AnalyseCtrl) {
                         attrs: {
                           title: noarg('practiceWithComputer'),
                           'data-act': 'practice',
-                          'data-icon': '',
+                          'data-icon': licon.Bullseye,
                         },
                         class: {
                           hidden: menuIsOpen || !!ctrl.retro,
@@ -228,7 +226,7 @@ function controls(ctrl: AnalyseCtrl) {
                         attrs: {
                           title: noarg('savingMoves'),
                           'data-act': 'persistence',
-                          'data-icon': '',
+                          'data-icon': licon.ScreenDesktop,
                         },
                         class: {
                           hidden: menuIsOpen || !!ctrl.retro,
@@ -239,10 +237,10 @@ function controls(ctrl: AnalyseCtrl) {
                 ]
           ),
       h('div.jumps', [
-        jumpButton('', 'first', canJumpPrev),
-        jumpButton('', 'prev', canJumpPrev),
-        jumpButton('', 'next', canJumpNext),
-        jumpButton('', 'last', canJumpNext),
+        jumpButton(licon.JumpFirst, 'first', canJumpPrev),
+        jumpButton(licon.JumpPrev, 'prev', canJumpPrev),
+        jumpButton(licon.JumpNext, 'next', canJumpNext),
+        jumpButton(licon.JumpLast, 'last', canJumpNext),
       ]),
       ctrl.studyPractice
         ? h('div.noop')
@@ -251,7 +249,7 @@ function controls(ctrl: AnalyseCtrl) {
             attrs: {
               title: noarg('menu'),
               'data-act': 'menu',
-              'data-icon': '',
+              'data-icon': licon.Hamburger,
             },
           }),
     ]
@@ -314,7 +312,10 @@ function renderPlayerStrips(ctrl: AnalyseCtrl): [VNode, VNode] | undefined {
 
 export default function (deps?: typeof studyDeps) {
   function renderResult(ctrl: AnalyseCtrl): VNode[] {
-    const render = (result: string, status: VNodeChildren) => [h('div.result', result), h('div.status', status)];
+    const render = (result: string, status: VNodeChildren) => [
+      h('div.result', result),
+      h('div.status', status),
+    ];
     if (ctrl.data.game.status.id >= 30) {
       let result;
       switch (ctrl.data.game.winner) {
@@ -340,7 +341,7 @@ export default function (deps?: typeof studyDeps) {
 
   const renderAnalyse = (ctrl: AnalyseCtrl, concealOf?: ConcealOf) =>
     h('div.analyse__moves.areplay', [
-      h('div', [
+      h(`div.areplay__v${ctrl.treeVersion}`, [
         ctrl.embed && ctrl.study ? h('div.chapter-name', ctrl.study.currentChapter().name) : null,
         renderTreeView(ctrl, concealOf),
         ...renderResult(ctrl),
@@ -420,7 +421,11 @@ export default function (deps?: typeof studyDeps) {
                       stepwiseScroll((e: WheelEvent, scroll: boolean) => {
                         if (ctrl.gamebookPlay()) return;
                         const target = e.target as HTMLElement;
-                        if (target.tagName !== 'PIECE' && target.tagName !== 'SQUARE' && target.tagName !== 'CG-BOARD')
+                        if (
+                          target.tagName !== 'PIECE' &&
+                          target.tagName !== 'SQUARE' &&
+                          target.tagName !== 'CG-BOARD'
+                        )
                           return;
                         e.preventDefault();
                         if (e.deltaY > 0 && scroll) control.next(ctrl);
@@ -461,7 +466,9 @@ export default function (deps?: typeof studyDeps) {
               'div.analyse__underboard',
               {
                 hook:
-                  ctrl.synthetic || playable(ctrl.data) ? undefined : onInsert(elm => serverSideUnderboard(elm, ctrl)),
+                  ctrl.synthetic || playable(ctrl.data)
+                    ? undefined
+                    : onInsert(elm => serverSideUnderboard(elm, ctrl)),
               },
               study ? deps?.studyView.underboard(ctrl) : [inputs(ctrl)]
             ),
@@ -492,7 +499,7 @@ export default function (deps?: typeof studyDeps) {
                             {
                               attrs: {
                                 href: router.game(ctrl.data, ctrl.data.player.color),
-                                'data-icon': '',
+                                'data-icon': licon.Back,
                               },
                             },
                             ctrl.trans.noarg('backToGame')
@@ -519,7 +526,7 @@ function renderPersistence(ctrl: AnalyseCtrl): VNode | undefined {
   return h('div.analyse__persistence.sub-box', [
     h('div.title', noarg('savingMoves')),
     h('p.analyse__persistence__help', [
-      iconTag(''),
+      iconTag(licon.InfoCircle),
       noarg('savingMovesHelp'),
       ctrl.ongoing ? null : ' ' + noarg('makeAStudy'),
     ]),
@@ -530,7 +537,7 @@ function renderPersistence(ctrl: AnalyseCtrl): VNode | undefined {
         {
           attrs: {
             title: noarg('clearSavedMoves'),
-            'data-icon': '',
+            'data-icon': licon.Trash,
           },
           hook: bind('click', ctrl.persistence.clear),
         },

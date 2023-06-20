@@ -74,6 +74,7 @@
   <string name="numberOfByesQ">Скільки bye може отримати гравець?</string>
   <string name="numberOfByesA">Гравець отримує один bye щоразу коли система не може підібрати для нього пару.
 Крім того, половина bye приписується за запізнення.</string>
+  <string name="earlyDrawsQ">Що відбувається з ранніми нічиїми?</string>
   <string name="whatIfOneDoesntPlayQ">Що станеться, якщо гравець не грає в гру?</string>
   <string name="whatIfOneDoesntPlayA">Його годинник буде йти, час мине і він програє гру.
 Тоді система вилучить гравця з турніру, щоб він більше не програвав.
@@ -120,4 +121,5 @@
   <string name="unlimitedAndFree">Без обмежень та безкоштовно</string>
   <string name="predefinedUsers">Брати участь можуть лише попередньо визначені користувачі</string>
   <string name="forbiddedUsers">Якщо цей список не порожній, то користувачам, відсутнім у цьому списку, буде заборонено приєднуватися. Одне ім\'я користувача на рядок.</string>
+  <string name="playYourGames">Продивитися свої ігри</string>
 </resources>

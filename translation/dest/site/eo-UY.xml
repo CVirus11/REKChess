@@ -880,8 +880,6 @@
   <string name="congratsYouWon">Gratulon, vi venkis!</string>
   <string name="gameVsX">Ludo kontraŭ %1$s</string>
   <string name="resVsX">%1$s kontraŭ %2$s</string>
-  <string name="someoneReviewedYourCoachProfile">Iu rigardos vian trejnistan profilon.</string>
-  <string name="newPendingReview">Nova okazonta revizio</string>
   <string name="lostAgainstTOSViolator">Vi malvenkis kontraŭ iu kiu malobeis la regulojn de Lichess</string>
   <string name="refundXpointsTimeControlY">Estis redonitaj %1$s %2$s poentoj.</string>
   <string name="timeAlmostUp">La tempo preskaŭ finiĝis!</string>
@@ -930,5 +928,5 @@ kaj influas la rangojn de ludantoj</string>
   <string name="since">Ekde</string>
   <string name="until">Ĝis</string>
   <string name="lichessDbExplanation">Rangaj ludoj luditaj per Lichess</string>
-  <string name="ourEventTips" comment="ourEventTips&#10;&#10;A link that leads to https://lichess.org/page/event-tips&#10;&#10;That page describes best practices for events such as tournaments. It includes guidance on configuring the tournament, advertising it, and rules about prizes.">Niaj konsiletoj por organizi eventojn</string>
+  <string name="ourEventTips">Niaj konsiletoj por organizi eventojn</string>
 </resources>

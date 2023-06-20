@@ -3,6 +3,7 @@ import * as glyphForm from './studyGlyph';
 import * as practiceView from './practice/studyPracticeView';
 import AnalyseCtrl from '../ctrl';
 import { h, VNode } from 'snabbdom';
+import * as licon from 'common/licon';
 import { iconTag, bind, dataIcon, MaybeVNodes } from 'common/snabbdom';
 import { playButtons as gbPlayButtons, overrideButton as gbOverrideButton } from './gamebook/gamebookButtons';
 import { richHTML } from 'common/richText';
@@ -85,13 +86,13 @@ function buttons(root: AnalyseCtrl): VNode {
         ctrl,
         tab: 'tags',
         hint: noarg('pgnTags'),
-        icon: iconTag(''),
+        icon: iconTag(licon.Tag),
       }),
       toolButton({
         ctrl,
         tab: 'comments',
         hint: noarg('commentThisPosition'),
-        icon: iconTag(''),
+        icon: iconTag(licon.BubbleSpeech),
         onClick() {
           ctrl.commentForm.start(ctrl.vm.chapterId, root.path, root.node);
         },
@@ -110,24 +111,24 @@ function buttons(root: AnalyseCtrl): VNode {
         ctrl,
         tab: 'serverEval',
         hint: noarg('computerAnalysis'),
-        icon: iconTag(''),
+        icon: iconTag(licon.BarChart),
         count: root.data.analysis && '✓',
       }),
       toolButton({
         ctrl,
         tab: 'multiBoard',
         hint: 'Multiboard',
-        icon: iconTag(''),
+        icon: iconTag(licon.Multiboard),
       }),
       toolButton({
         ctrl,
         tab: 'share',
         hint: noarg('shareAndExport'),
-        icon: iconTag(''),
+        icon: iconTag(licon.NodeBranching),
       }),
       !ctrl.relay
         ? h('span.help', {
-            attrs: { title: 'Need help? Get the tour!', 'data-icon': '' },
+            attrs: { title: 'Need help? Get the tour!', 'data-icon': licon.InfoCircle },
             hook: bind('click', ctrl.startTour),
           })
         : null,
@@ -151,7 +152,7 @@ function metadata(ctrl: StudyCtrl): VNode {
         {
           class: { liked: d.liked },
           attrs: {
-            'data-icon': d.liked ? '' : '',
+            'data-icon': d.liked ? licon.Heart : licon.HeartOutline,
             title: ctrl.trans.noarg(d.liked ? 'unlike' : 'like'),
           },
           hook: bind('click', ctrl.toggleLike),
@@ -170,18 +171,11 @@ export function side(ctrl: StudyCtrl): VNode {
 
   const makeTab = (key: Tab, name: string) =>
     h(
-      'span.' + key,
+      `span.${key}`,
       {
         class: { active: !tourShow?.active && activeTab === key },
         attrs: { role: 'tab' },
-        hook: bind(
-          'mousedown',
-          () => {
-            tourShow?.disable();
-            ctrl.vm.tab(key);
-          },
-          ctrl.redraw
-        ),
+        hook: bind('mousedown', () => ctrl.setTab(key)),
       },
       name
     );
@@ -200,7 +194,7 @@ export function side(ctrl: StudyCtrl): VNode {
           ctrl.redraw
         ),
         attrs: {
-          'data-icon': '',
+          'data-icon': licon.RadioTower,
           role: 'tab',
         },
       },
@@ -210,7 +204,10 @@ export function side(ctrl: StudyCtrl): VNode {
   const chaptersTab =
     tourShow && ctrl.looksNew() && !ctrl.members.canContribute()
       ? null
-      : makeTab('chapters', ctrl.trans.pluralSame(ctrl.relay ? 'nbGames' : 'nbChapters', ctrl.chapters.list().length));
+      : makeTab(
+          'chapters',
+          ctrl.trans.pluralSame(ctrl.relay ? 'nbGames' : 'nbChapters', ctrl.chapters.list().length)
+        );
 
   const tabs = h('div.tabs-horiz', { attrs: { role: 'tablist' } }, [
     tourTab,
@@ -220,20 +217,22 @@ export function side(ctrl: StudyCtrl): VNode {
       : null,
     h('span.search.narrow', {
       attrs: {
-        'data-icon': '',
+        'data-icon': licon.Search,
         title: 'Search',
       },
       hook: bind('click', () => ctrl.search.open(true)),
     }),
     ctrl.members.isOwner()
       ? h('span.more.narrow', {
-          attrs: { 'data-icon': '' },
+          attrs: { 'data-icon': licon.Hamburger },
           hook: bind('click', () => ctrl.form.open(!ctrl.form.open()), ctrl.redraw),
         })
       : null,
   ]);
 
-  const content = tourShow?.active ? relayTourRounds(ctrl) : (activeTab === 'members' ? memberView : chapterView)(ctrl);
+  const content = tourShow?.active
+    ? relayTourRounds(ctrl)
+    : (activeTab === 'members' ? memberView : chapterView)(ctrl);
 
   return h('div.study__side', [tabs, content]);
 }
@@ -244,7 +243,7 @@ export function contextMenu(ctrl: StudyCtrl, path: Tree.Path, node: Tree.Node): 
         h(
           'a',
           {
-            attrs: dataIcon(''),
+            attrs: dataIcon(licon.BubbleSpeech),
             hook: bind('click', () => {
               ctrl.vm.toolTab('comments');
               ctrl.commentForm.start(ctrl.currentChapter()!.id, path, node);
@@ -298,7 +297,9 @@ export function underboard(ctrl: AnalyseCtrl): MaybeVNodes {
         ? commentForm.view(ctrl)
         : commentForm.viewDisabled(
             ctrl,
-            study.members.canContribute() ? 'Press REC to comment moves' : 'Only the study members can comment on moves'
+            study.members.canContribute()
+              ? 'Press REC to comment moves'
+              : 'Only the study members can comment on moves'
           );
       break;
     case 'glyphs':

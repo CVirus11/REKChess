@@ -5,7 +5,7 @@ import lila.common.config.*
 import lila.common.EmailAddress
 import lila.common.Iso
 import lila.i18n.I18nKeys.{ emails as trans }
-import lila.user.{ User, UserRepo }
+import lila.user.{ User, Me, UserRepo }
 import lila.mailer.Mailer
 
 final class EmailChange(
@@ -18,7 +18,7 @@ final class EmailChange(
   import Mailer.html.*
 
   def send(user: User, email: EmailAddress): Funit =
-    !email.looksLikeFakeEmail ?? {
+    !email.looksLikeFakeEmail so {
       tokener make TokenPayload(user.id, email).some flatMap { token =>
         lila.mon.email.send.change.increment()
         given play.api.i18n.Lang = user.realLang | lila.i18n.defaultLang
@@ -46,10 +46,10 @@ ${trans.common_orPaste.txt()}
     }
 
   // also returns the previous email address
-  def confirm(token: String): Fu[Option[(User, Option[EmailAddress])]] =
+  def confirm(token: String): Fu[Option[(Me, Option[EmailAddress])]] =
     tokener read token dmap (_.flatten) flatMapz { case TokenPayload(userId, email) =>
       userRepo.email(userId) flatMap { previous =>
-        (userRepo.setEmail(userId, email).recoverDefault >> userRepo.byId(userId))
+        (userRepo.setEmail(userId, email).recoverDefault >> userRepo.me(userId))
           .map2(_ -> previous)
       }
     }
@@ -63,14 +63,14 @@ ${trans.common_orPaste.txt()}
         case Array(id, email) => EmailAddress from email map { TokenPayload(UserId(id), _) }
         case _                => none
     val to = a =>
-      a ?? { case TokenPayload(userId, email) =>
+      a so { case TokenPayload(userId, email) =>
         s"$userId$sep$email"
       }
 
   private val tokener = new StringToken[Option[TokenPayload]](
     secret = tokenerSecret,
     getCurrentValue = p =>
-      p ?? { case TokenPayload(userId, _) =>
-        userRepo email userId dmap (_.??(_.value))
+      p so { case TokenPayload(userId, _) =>
+        userRepo email userId dmap (_.so(_.value))
       }
   )

@@ -2,6 +2,7 @@ import type { AcplChart } from 'chart/dist/interface';
 
 import AnalyseCtrl from './ctrl';
 import { baseUrl } from './view/util';
+import * as licon from 'common/licon';
 import modal from 'common/modal';
 import { url as xhrUrl, textRaw as xhrTextRaw } from 'common/xhr';
 import { AnalyseData } from './interfaces';
@@ -73,7 +74,9 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
     else if (loading && !$('#acpl-chart-loader').length) $panel.append(chartLoader());
     lichess
       .loadModule('chart.game')
-      .then(() => window.LichessChartGame.acpl($('#acpl-chart')[0] as HTMLElement, data, ctrl.mainline, ctrl.trans))
+      .then(() =>
+        window.LichessChartGame.acpl($('#acpl-chart')[0] as HTMLElement, data, ctrl.mainline, ctrl.trans)
+      )
       .then(chart => {
         advChart = chart;
       });
@@ -90,7 +93,12 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
     if ((panel == 'move-times' || ctrl.opts.hunter) && !timeChartLoaded)
       lichess.loadModule('chart.game').then(() => {
         timeChartLoaded = true;
-        window.LichessChartGame.movetime($('#movetimes-chart')[0] as HTMLElement, data, ctrl.trans, ctrl.opts.hunter);
+        window.LichessChartGame.movetime(
+          $('#movetimes-chart')[0] as HTMLElement,
+          data,
+          ctrl.trans,
+          ctrl.opts.hunter
+        );
       });
     if ((panel == 'computer-analysis' || ctrl.opts.hunter) && $('#acpl-chart').length)
       setTimeout(startAdvantageChart, 200);
@@ -152,7 +160,7 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
           '</pre><br />' +
           iframe +
           '<br /><br />' +
-          '<a class="text" data-icon="" href="/developers#embed-game">Read more about embedding games</a></div>'
+          `<a class="text" data-icon="${licon.InfoCircle}" href="/developers#embed-game">Read more about embedding games</a></div>`
       ),
     });
   });

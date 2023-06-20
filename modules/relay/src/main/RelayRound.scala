@@ -41,20 +41,15 @@ case class RelayRound(
       sync = sync.play
     )
 
-  def ensureStarted =
-    copy(
-      startedAt = startedAt orElse nowInstant.some
-    )
-
+  def ensureStarted     = copy(startedAt = startedAt orElse nowInstant.some)
   def hasStarted        = startedAt.isDefined
   def hasStartedEarly   = hasStarted && startsAt.exists(_ isAfter nowInstant)
   def shouldHaveStarted = hasStarted || startsAt.exists(_ isBefore nowInstant)
 
   def shouldGiveUp =
-    !hasStarted && (startsAt match {
+    !hasStarted && startsAt.match
       case Some(at) => at.isBefore(nowInstant minusHours 3)
       case None     => createdAt.isBefore(nowInstant minusDays 1)
-    })
 
   def withSync(f: RelayRound.Sync => RelayRound.Sync) = copy(sync = f(sync))
 
@@ -74,6 +69,7 @@ object RelayRound:
       until: Option[Instant],          // sync until then; resets on move
       nextAt: Option[Instant],         // when to run next sync
       period: Option[Seconds],         // override time between two sync (rare)
+      delay: Option[Seconds],          // add delay between the source and the study
       log: SyncLog
   ):
 
@@ -83,7 +79,7 @@ object RelayRound:
       if (hasUpstream) copy(until = nowInstant.plusHours(1).some)
       else pause
 
-    def ongoing = until ?? nowInstant.isBefore
+    def ongoing = until so nowInstant.isBefore
 
     def play =
       if (hasUpstream) renew.copy(nextAt = nextAt orElse nowInstant.plusSeconds(3).some)
@@ -106,6 +102,8 @@ object RelayRound:
     def addLog(event: SyncLog.Event) = copy(log = log add event)
     def clearLog                     = copy(log = SyncLog.empty)
 
+    def hasDelay = delay.exists(_.value > 0)
+
     override def toString = upstream.toString
 
   object Sync:
@@ -126,14 +124,17 @@ object RelayRound:
     case class UpstreamIds(ids: List[GameId]) extends Upstream
 
   trait AndTour:
-    val round: RelayRound
     val tour: RelayTour
-    def fullName = s"${tour.name} • ${round.name}"
+    def display: RelayRound
+    def link: RelayRound
+    def fullName = s"${tour.name} • ${display.name}"
     def path: String =
-      s"/broadcast/${tour.slug}/${if (round.slug == tour.slug) "-" else round.slug}/${round.id}"
+      s"/broadcast/${tour.slug}/${if (link.slug == tour.slug) "-" else link.slug}/${link.id}"
     def path(chapterId: StudyChapterId): String = s"$path/$chapterId"
 
   case class WithTour(round: RelayRound, tour: RelayTour) extends AndTour:
+    def display                 = round
+    def link                    = round
     def withStudy(study: Study) = WithTourAndStudy(round, tour, study)
 
   case class WithTourAndStudy(relay: RelayRound, tour: RelayTour, study: Study):

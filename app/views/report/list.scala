@@ -4,11 +4,9 @@ import controllers.routes
 import controllers.appeal.routes.{ Appeal as appealRoutes }
 import controllers.report.routes.{ Report as reportRoutes }
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.report.Report.WithSuspect
-import lila.user.Holder
 
 object list:
 
@@ -18,7 +16,7 @@ object list:
       scores: lila.report.Room.Scores,
       streamers: Int,
       appeals: Int
-  )(implicit ctx: Context) =
+  )(using WebContext) =
     layout(filter, scores, streamers, appeals)(
       table(cls := "slist slist-pad see")(
         thead(
@@ -66,11 +64,13 @@ object list:
                     case None =>
                       if (r.done.isDefined)
                         postForm(action := reportRoutes.inquiry(r.id), cls := "reopen")(
-                          submitButton(dataIcon := "", cls := "text button button-metal")("Reopen")
+                          submitButton(dataIcon := licon.PlayTriangle, cls := "text button button-metal")(
+                            "Reopen"
+                          )
                         )
                       else
                         postForm(action := reportRoutes.inquiry(r.id), cls := "inquiry")(
-                          submitButton(dataIcon := "", cls := "button button-metal")
+                          submitButton(dataIcon := licon.PlayTriangle, cls := "button button-metal")
                         )
                     case Some(inquiry) =>
                       frag(
@@ -90,7 +90,7 @@ object list:
 
   def layout(filter: String, scores: lila.report.Room.Scores, streamers: Int, appeals: Int)(
       body: Frag
-  )(implicit ctx: Context) =
+  )(using ctx: WebContext) =
     views.html.base.layout(
       title = "Reports",
       moreCss = cssTag("mod.report")
@@ -108,9 +108,9 @@ object list:
                 "All",
                 scoreTag(scores.highest)
               ),
-              ctx.me ?? { me =>
+              ctx.me so { me =>
                 lila.report.Room.values
-                  .filter(lila.report.Room.isGrantedFor(Holder(me)))
+                  .filter(lila.report.Room.isGrantedFor(Me(me)))
                   .map { room =>
                     a(
                       href := reportRoutes.listWithFilter(room.key),

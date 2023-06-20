@@ -26,6 +26,14 @@ export interface ReqPosition {
   path: string;
 }
 
+interface GameUpdate {
+  id: string;
+  fen: Fen;
+  lm: Uci;
+  wc?: number;
+  bc?: number;
+}
+
 export type StudySocketSendParams =
   | [t: 'setPath', d: ReqPosition]
   | [t: 'deleteNode', d: ReqPosition & { jumpTo: string }]
@@ -144,7 +152,11 @@ export function make(send: AnalyseSocketSend, ctrl: AnalyseCtrl): Socket {
       clearTimeout(anaDestsTimeout);
     },
     fen(e: GameUpdate) {
-      if (ctrl.forecast && e.id === ctrl.data.game.id && treeOps.last(ctrl.mainline)!.fen.indexOf(e.fen) !== 0) {
+      if (
+        ctrl.forecast &&
+        e.id === ctrl.data.game.id &&
+        treeOps.last(ctrl.mainline)!.fen.indexOf(e.fen) !== 0
+      ) {
         ctrl.forecast.reloadToLastPly();
       }
     },

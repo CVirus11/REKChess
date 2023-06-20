@@ -21,10 +21,13 @@ object Environment
     with TeamHelper
     with TournamentHelper
     with FlashHelper
-    with ChessgroundHelper
-    with UserContext.ToLang:
+    with ChessgroundHelper:
 
   export lila.Lila.{ id as _, *, given }
+  export lila.api.context.{ *, given }
+  export lila.api.Nonce
+  export lila.user.Me
+  export lila.common.licon
 
   private var envVar: Option[Env] = None
   def setEnv(e: Env)              = { envVar = Some(e) }

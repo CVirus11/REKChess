@@ -1,5 +1,6 @@
 import { parseFen } from 'chessops/fen';
 import { defined, prop, Prop } from 'common';
+import * as licon from 'common/licon';
 import { snabModal } from 'common/modal';
 import { bind, bindSubmit, onInsert } from 'common/snabbdom';
 import { StoredProp, storedStringProp } from 'common/storage';
@@ -58,7 +59,7 @@ export function ctrl(
     variants: [],
     open: false,
     initial: prop(false),
-    tab: storedStringProp('study.form.tab', 'init'),
+    tab: storedStringProp('analyse.study.form.tab', 'init'),
     editor: null,
     editorFen: prop(null),
     isDefaultName: true,
@@ -159,7 +160,7 @@ export function view(ctrl: StudyChapterNewFormCtrl): VNode {
         : h('h2', [
             noarg('newChapter'),
             h('i.help', {
-              attrs: { 'data-icon': '' },
+              attrs: { 'data-icon': licon.InfoCircle },
               hook: bind('click', ctrl.startTour),
             }),
           ]),
@@ -293,7 +294,9 @@ export function view(ctrl: StudyChapterNewFormCtrl): VNode {
           activeTab === 'pgn'
             ? h('div.form-group', [
                 h('textarea#chapter-pgn.form-control', {
-                  attrs: { placeholder: trans.pluralSame('pasteYourPgnTextHereUpToNbGames', ctrl.multiPgnMax) },
+                  attrs: {
+                    placeholder: trans.pluralSame('pasteYourPgnTextHereUpToNbGames', ctrl.multiPgnMax),
+                  },
                 }),
                 h(
                   'a.button.button-empty',
@@ -365,7 +368,8 @@ export function view(ctrl: StudyChapterNewFormCtrl): VNode {
                 'select#chapter-orientation.form-control',
                 {
                   hook: bind('change', e => {
-                    ctrl.vm.editor && ctrl.vm.editor.setOrientation((e.target as HTMLInputElement).value as Color);
+                    ctrl.vm.editor &&
+                      ctrl.vm.editor.setOrientation((e.target as HTMLInputElement).value as Color);
                   }),
                 },
                 [...(activeTab === 'pgn' ? ['automatic'] : []), 'white', 'black'].map(c =>

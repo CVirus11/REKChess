@@ -60,21 +60,21 @@
   <string name="analysis">Аналіз</string>
   <string name="depthX">Глибина %s</string>
   <string name="usingServerAnalysis">Використовуючи комп\'ютерний аналіз</string>
-  <string name="loadingEngine">Готування рушія...</string>
-  <string name="calculatingMoves">Обчислення ходів...</string>
+  <string name="loadingEngine">Завантаження рушія...</string>
+  <string name="calculatingMoves">Розрахунок ходів...</string>
   <string name="engineFailed">Помилка завантаження рушія</string>
   <string name="cloudAnalysis">Хмарний аналіз</string>
   <string name="goDeeper">Ще глибше</string>
   <string name="showThreat">Показати загрозу</string>
-  <string name="inLocalBrowser">на комп\'ютері</string>
+  <string name="inLocalBrowser">у браузері</string>
   <string name="toggleLocalEvaluation">Включити аналіз на комп\'ютері</string>
-  <string name="promoteVariation">Зробити варіант головним</string>
-  <string name="makeMainLine">Зробити цей варіант основним</string>
+  <string name="promoteVariation">Підвищити рівень</string>
+  <string name="makeMainLine">Зробити варіант основним</string>
   <string name="deleteFromHere">Видалити з цього місця</string>
-  <string name="forceVariation">Зробити основним</string>
+  <string name="forceVariation">Зробити варіантом</string>
   <string name="move">Хід</string>
   <string name="variantLoss">Шанс програшу</string>
-  <string name="variantWin">Переможний варіант</string>
+  <string name="variantWin">Виграш у варіанті</string>
   <string name="insufficientMaterial">Недостатньо матеріалу</string>
   <string name="pawnMove">Хід пішака</string>
   <string name="capture">Взяття</string>
@@ -88,7 +88,7 @@
   <string name="averageRatingX">Середній рейтинг %s</string>
   <string name="recentGames">Останні ігри</string>
   <string name="topGames">Кращі ігри</string>
-  <string name="masterDbExplanation">Два мільйони ігор за дошкою %1$s+ гравців FIDE з рейтингом від %2$s до %3$s</string>
+  <string name="masterDbExplanation">Ігор за дошкою гравців FIDE з рейтингом %1$s+ з %2$s по %3$s</string>
   <plurals name="mateInXHalfMoves">
     <item quantity="one">Мат в %s напівхід</item>
     <item quantity="few">Мат в %s напівходи</item>
@@ -97,8 +97,9 @@
   </plurals>
   <string name="dtzWithRounding">DTZ50\'\' при округленні в залежності від кількості напівходів, доки не відбудеться наступне взяття або хiд пiшаком</string>
   <string name="noGameFound">Ігор не знайдено</string>
+  <string name="maxDepthReached">Досягнуто найбільшої глибини!</string>
   <string name="maybeIncludeMoreGamesFromThePreferencesMenu">Може, варто включити більше ігор з меню налаштувань?</string>
-  <string name="openings">Дебют</string>
+  <string name="openings">Дебюти</string>
   <string name="openingExplorer">Провідник дебютів</string>
   <string name="openingEndgameExplorer">Дослідник дебютів\ендпшілю</string>
   <string name="xOpeningExplorer">Провідник дебюту %s</string>
@@ -123,6 +124,7 @@
   <string name="memory">Пам\'ять</string>
   <string name="infiniteAnalysis">Нескінченний аналіз</string>
   <string name="removesTheDepthLimit">Знімає обмеження на глибину аналізу - ваш комп’ютер стане теплішим</string>
+  <string name="engineManager">Менеджер рушія</string>
   <string name="blunder">Груба помилка</string>
   <string name="mistake">Помилка</string>
   <string name="inaccuracy">Неточність</string>
@@ -140,7 +142,7 @@
   </plurals>
   <plurals name="nbInaccuracies">
     <item quantity="one">%s неточність</item>
-    <item quantity="few">%s неточністі</item>
+    <item quantity="few">%s неточності</item>
     <item quantity="many">%s неточностей</item>
     <item quantity="other">%s неточностей</item>
   </plurals>
@@ -164,6 +166,12 @@
     <item quantity="few">%s гри</item>
     <item quantity="many">%s ігор</item>
     <item quantity="other">%s ігор</item>
+  </plurals>
+  <plurals name="ratingXOverYGames">
+    <item quantity="one">Рейтинг %1$s за %2$s партію</item>
+    <item quantity="few">Рейтинг %1$s за %2$s партії</item>
+    <item quantity="many">Рейтинг %1$s за %2$s партій</item>
+    <item quantity="other">Рейтинг %1$s за %2$s партій</item>
   </plurals>
   <plurals name="nbBookmarks">
     <item quantity="one">%s закладка</item>
@@ -386,6 +394,7 @@
   </plurals>
   <string name="viewTournament">Переглянути турнір</string>
   <string name="backToTournament">Повернутися до турніру</string>
+  <string name="noDrawBeforeSwissLimit">Нічия не можлива до 30 ходу гри у турнірі за швейцарською системою.</string>
   <string name="thematic">Тематичний</string>
   <plurals name="moreThanNbRatedGames">
     <item quantity="one">%s рейтингова гра</item>
@@ -745,6 +754,11 @@
   <string name="keyGoToStartOrEnd">перейти до початку/кінця</string>
   <string name="keyShowOrHideComments">показати/приховати коментарі</string>
   <string name="keyEnterOrExitVariation">зайти/вийти з варіанту</string>
+  <string name="keyRequestComputerAnalysis">Зробити запит на комп\'ютерний аналіз, Учіться на своїх помилках</string>
+  <string name="keyNextLearnFromYourMistakes">Далі (Вивчити свої помилки)</string>
+  <string name="keyNextBlunder">Наступна груба помилка</string>
+  <string name="keyNextMistake">Наступна помилка</string>
+  <string name="keyNextInaccuracy">Наступна неточність</string>
   <string name="newTournament">Новий турнір</string>
   <string name="tournamentHomeTitle">Шаховий турнір із різними контролем часу та варіантами</string>
   <string name="tournamentHomeDescription">Грайте у швидкі шахи на турнірі! Приєднуйтеся до запланованих офіційних турнірів або створіть власний. Куля, бліц, класичні шахи, шахи Фішера, \"Цар гори\", \"Три шахи\" та інші варіанти забезпечать нескінченне задоволення.</string>
@@ -846,6 +860,7 @@
   <string name="invalidFen">Неприпустимий FEN</string>
   <string name="custom">Своя гра</string>
   <string name="notifications">Сповіщення</string>
+  <string name="notificationsX">Сповіщення: %1$s</string>
   <string name="perfRatingX">Рейтинг: %s</string>
   <plurals name="nbSecondsToPlayTheFirstMove">
     <item quantity="one">%s секунда на перший хід</item>
@@ -946,6 +961,8 @@
   <string name="useTheReportForm">використовуйте форму звіту</string>
   <string name="toRequestSupport">Для запиту підтримки %1$s</string>
   <string name="tryTheContactPage">спробуйте сторінку контактів</string>
+  <string name="makeSureToRead">Варто прочитати %1$s</string>
+  <string name="theForumEtiquette">етикет форуму</string>
   <string name="thisTopicIsArchived">Ця тема була заархівована і додати відповідь більше не можна.</string>
   <string name="joinTheTeamXToPost">Приєднайтесь до %1$s, щоб писати у цьому форумі</string>
   <string name="teamNamedX">%1$s команда</string>
@@ -962,8 +979,6 @@
   <string name="congratsYouWon">Вітання, ви виграли!</string>
   <string name="gameVsX">Гра проти %1$s</string>
   <string name="resVsX">%1$s vs %2$s</string>
-  <string name="someoneReviewedYourCoachProfile">Хтось переглянув ваш тренерський профіль.</string>
-  <string name="newPendingReview">Новий огляд в очікуванні</string>
   <string name="lostAgainstTOSViolator">Ви програли комусь хто порушував Lichess TOS</string>
   <string name="refundXpointsTimeControlY">Повернення: %1$s %2$s рангових очок.</string>
   <string name="timeAlmostUp">Час майже скінчився!</string>
@@ -1027,5 +1042,5 @@
   <string name="lichessDbExplanation">Рейтингові партії усiх гравців Lichess</string>
   <string name="switchSides">Змінити сторону</string>
   <string name="closingAccountWithdrawAppeal">Закриття облікового запису призведе до скасування вашої апеляції</string>
-  <string name="ourEventTips" comment="ourEventTips&#10;&#10;Tips in the sense of advice.&#10;&#10;A link that leads to https://lichess.org/page/event-tips&#10;&#10;That page describes best practices for events such as tournaments. It includes guidance on configuring the tournament, advertising it, and rules about prizes.">Наші поради щодо організації подій</string>
+  <string name="ourEventTips">Наші поради щодо організації подій</string>
 </resources>

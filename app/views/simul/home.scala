@@ -1,6 +1,5 @@
 package views.html.simul
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.*
 
@@ -13,7 +12,7 @@ object home:
       opens: List[lila.simul.Simul],
       starteds: List[lila.simul.Simul],
       finisheds: List[lila.simul.Simul]
-  )(using Context) =
+  )(using WebContext) =
     views.html.base.layout(
       moreCss = cssTag("simul.list"),
       moreJs = embedJsUnsafeLoadThen(s"""

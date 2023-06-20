@@ -1,6 +1,7 @@
 import { renderIndexAndMove } from '../view/moveView';
 import { RetroCtrl } from './retroCtrl';
 import AnalyseCtrl from '../ctrl';
+import * as licon from 'common/licon';
 import { bind, dataIcon } from 'common/snabbdom';
 import { spinnerVdom as spinner } from 'common/spinner';
 import { h, VNode } from 'snabbdom';
@@ -30,7 +31,7 @@ function jumpToNext(ctrl: RetroCtrl) {
     {
       hook: bind('click', ctrl.jumpToNext),
     },
-    [h('i', { attrs: dataIcon('') }), ctrl.noarg('next')]
+    [h('i', { attrs: dataIcon(licon.PlayTriangle) }), ctrl.noarg('next')]
   );
 }
 
@@ -155,7 +156,10 @@ const feedback = {
       h(
         'div.half.top',
         h('div.player.center', [
-          h('div.instruction', [h('strong', ctrl.noarg('evaluatingYourMove')), renderEvalProgress(ctrl.node())]),
+          h('div.instruction', [
+            h('strong', ctrl.noarg('evaluatingYourMove')),
+            renderEvalProgress(ctrl.node()),
+          ]),
         ])
       ),
     ];
@@ -177,7 +181,9 @@ const feedback = {
             'em',
             nothing
               ? ctrl.noarg(ctrl.color === 'white' ? 'noMistakesFoundForWhite' : 'noMistakesFoundForBlack')
-              : ctrl.noarg(ctrl.color === 'white' ? 'doneReviewingWhiteMistakes' : 'doneReviewingBlackMistakes')
+              : ctrl.noarg(
+                  ctrl.color === 'white' ? 'doneReviewingWhiteMistakes' : 'doneReviewingBlackMistakes'
+                )
           ),
           h('div.choices.end', [
             nothing
@@ -223,7 +229,7 @@ export default function (root: AnalyseCtrl): VNode | undefined {
       h('button.fbt', {
         hook: bind('click', root.toggleRetro, root.redraw),
         attrs: {
-          'data-icon': '',
+          'data-icon': licon.X,
           'aria-label': 'Close learn window',
         },
       }),

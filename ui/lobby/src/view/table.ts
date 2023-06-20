@@ -8,13 +8,17 @@ import { numberFormat } from 'common/number';
 export default function table(ctrl: LobbyController) {
   const { data, trans, opts } = ctrl;
   const hasOngoingRealTimeGame = ctrl.hasOngoingRealTimeGame();
-  const hookDisabled = opts.playban || opts.hasUnreadLichessMessage || ctrl.me?.isBot || hasOngoingRealTimeGame;
+  const hookDisabled =
+    opts.playban || opts.hasUnreadLichessMessage || ctrl.me?.isBot || hasOngoingRealTimeGame;
   const { members, rounds } = data.counters;
   return h('div.lobby__table', [
-    h('div.bg-switch', { attrs: { title: 'Dark mode' } }, [h('div.bg-switch__track'), h('div.bg-switch__thumb')]),
+    h('div.bg-switch', { attrs: { title: 'Dark mode' } }, [
+      h('div.bg-switch__track'),
+      h('div.bg-switch__thumb'),
+    ]),
     h(
       'div.lobby__start',
-      (opts.blindMode ? [h('h2', 'Play')] : []).concat(
+      (lichess.blindMode ? [h('h2', 'Play')] : []).concat(
         [
           ['hook', 'createAGame', hookDisabled],
           ['friend', 'playWithAFriend', hasOngoingRealTimeGame],
@@ -27,7 +31,11 @@ export default function table(ctrl: LobbyController) {
               attrs: { type: 'button' },
               hook: disabled
                 ? {}
-                : bind(opts.blindMode ? 'click' : 'mousedown', () => ctrl.setupCtrl.openModal(gameType), ctrl.redraw),
+                : bind(
+                    lichess.blindMode ? 'click' : 'mousedown',
+                    () => ctrl.setupCtrl.openModal(gameType),
+                    ctrl.redraw
+                  ),
             },
             trans(transKey)
           )
@@ -40,10 +48,10 @@ export default function table(ctrl: LobbyController) {
       'div.lobby__counters',
       () =>
         h('div.lobby__counters', [
-          opts.blindMode ? h('h2', 'Counters') : null,
+          lichess.blindMode ? h('h2', 'Counters') : null,
           h(
             'a',
-            { attrs: opts.blindMode ? {} : { href: '/player' } },
+            { attrs: lichess.blindMode ? {} : { href: '/player' } },
             trans.vdomPlural(
               'nbPlayers',
               members,
@@ -61,7 +69,7 @@ export default function table(ctrl: LobbyController) {
           ),
           h(
             'a',
-            opts.blindMode ? {} : { attrs: { href: '/games' } },
+            lichess.blindMode ? {} : { attrs: { href: '/games' } },
             trans.vdomPlural(
               'nbGamesInPlay',
               rounds,

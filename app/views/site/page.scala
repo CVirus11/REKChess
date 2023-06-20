@@ -2,36 +2,34 @@ package views.html.site
 
 import controllers.routes
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
+import io.prismic.{ Document, DocumentLinkResolver }
 
 object page:
 
-  def lone(doc: io.prismic.Document, resolver: io.prismic.DocumentLinkResolver)(implicit ctx: Context) =
+  def lone(doc: Document, resolver: DocumentLinkResolver)(using WebContext) =
     views.html.base.layout(
       moreCss = cssTag("page"),
       title = ~doc.getText("doc.title"),
       moreJs = doc.slugs.has("fair-play") option fairPlayJs
-    ) {
+    ):
       main(cls := "page-small box box-pad page force-ltr")(pageContent(doc, resolver))
-    }
 
-  private def fairPlayJs(implicit ctx: Context) = embedJsUnsafeLoadThen("""$('.slist td').each(function() {
+  private def fairPlayJs(using WebContext) = embedJsUnsafeLoadThen("""$('.slist td').each(function() {
 if (this.innerText == 'YES') this.style.color = 'green'; else if (this.innerText == 'NO') this.style.color = 'red';
 })""")
 
-  def withMenu(active: String, doc: io.prismic.Document, resolver: io.prismic.DocumentLinkResolver)(using
-      ctx: Context
-  ) =
+  def withMenu(active: String, doc: Document, resolver: DocumentLinkResolver)(using WebContext) =
     layout(
       title = ~doc.getText("doc.title"),
       active = active,
       contentCls = "page box box-pad force-ltr",
       moreCss = cssTag("page")
-    )(pageContent(doc, resolver))
+    ):
+      pageContent(doc, resolver)
 
-  def pageContent(doc: io.prismic.Document, resolver: io.prismic.DocumentLinkResolver) = frag(
+  def pageContent(doc: Document, resolver: DocumentLinkResolver) = frag(
     h1(cls := "box__top")(doc.getText("doc.title")),
     div(cls := "body")(
       Html
@@ -41,7 +39,7 @@ if (this.innerText == 'YES') this.style.color = 'green'; else if (this.innerText
     )
   )
 
-  def source(doc: io.prismic.Document, resolver: io.prismic.DocumentLinkResolver)(implicit ctx: Context) =
+  def source(doc: Document, resolver: DocumentLinkResolver)(using WebContext) =
     val title = ~doc.getText("doc.title")
     layout(
       title = title,
@@ -53,7 +51,7 @@ if (this.innerText == 'YES') this.style.color = 'green'; else if (this.innerText
 $('#asset-version-commit').attr('href', 'https://github.com/lichess-org/lila/commits/' + lichess.info.commit).find('pre').text(lichess.info.commit.substr(0, 12));
 $('#asset-version-message').text(lichess.info.message);"""
       )
-    )(
+    ):
       frag(
         st.section(cls := "box box-pad body")(
           h1(cls := "box__top")(title),
@@ -87,9 +85,8 @@ $('#asset-version-message').text(lichess.info.message);"""
         br,
         st.section(cls := "box")(freeJs())
       )
-    )
 
-  def webmasters(implicit ctx: Context) =
+  def webmasters(using WebContext) =
     val parameters = frag(
       p("Parameters:"),
       ul(
@@ -103,7 +100,7 @@ $('#asset-version-message').text(lichess.info.message);"""
       active = "webmasters",
       moreCss = cssTag("page"),
       contentCls = "page force-ltr"
-    )(
+    ):
       frag(
         st.section(cls := "box box-pad developers body")(
           h1(cls := "box__top")("HTTP API"),
@@ -126,7 +123,12 @@ $('#asset-version-message').text(lichess.info.message);"""
                 cls   := "copyable autoselect",
                 value := s"""<iframe src="$netBaseUrl/tv/frame?theme=brown&bg=dark" $args></iframe>"""
               ),
-              button(title := "Copy code", cls := "copy button", dataRel := "tv-embed-src", dataIcon := "")
+              button(
+                title    := "Copy code",
+                cls      := "copy button",
+                dataRel  := "tv-embed-src",
+                dataIcon := licon.Link
+              )
             ),
             parameters
           )
@@ -150,7 +152,7 @@ $('#asset-version-message').text(lichess.info.message);"""
                 title    := "Copy code",
                 cls      := "copy button",
                 dataRel  := "puzzle-embed-src",
-                dataIcon := ""
+                dataIcon := licon.Link
               )
             ),
             parameters,
@@ -193,7 +195,6 @@ $('#asset-version-message').text(lichess.info.message);"""
           )
         }
       )
-    )
 
   def layout(
       title: String,
@@ -201,14 +202,14 @@ $('#asset-version-message').text(lichess.info.message);"""
       contentCls: String = "",
       moreCss: Frag = emptyFrag,
       moreJs: Frag = emptyFrag
-  )(body: Frag)(implicit ctx: Context) =
+  )(body: Frag)(using WebContext) =
     views.html.base.layout(
       title = title,
       moreCss = moreCss,
       moreJs = moreJs
-    ) {
+    ):
       val sep                  = div(cls := "sep")
-      val external             = frag(" ", i(dataIcon := ""))
+      val external             = frag(" ", i(dataIcon := licon.ExternalArrow))
       def activeCls(c: String) = cls := active.activeO(c)
       main(cls := "page-menu")(
         st.nav(cls := "page-menu__menu subnav")(
@@ -233,4 +234,3 @@ $('#asset-version-message').text(lichess.info.message);"""
         ),
         div(cls := s"page-menu__content $contentCls")(body)
       )
-    }

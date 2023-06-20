@@ -42,11 +42,15 @@ function renderChildrenOf(ctx: Ctx, node: Tree.Node, opts: Opts): MaybeVNodes | 
   const cs = node.children,
     main = cs[0];
   if (!main) return;
-  const conceal = opts.noConceal ? null : opts.conceal || ctx.concealOf(true)(opts.parentPath + main.id, main);
+  const conceal = opts.noConceal
+    ? null
+    : opts.conceal || ctx.concealOf(true)(opts.parentPath + main.id, main);
   if (conceal === 'hide') return;
   if (opts.isMainline) {
     const isWhite = main.ply % 2 === 1,
-      commentTags = renderMainlineCommentsOf(ctx, main, conceal, true, opts.parentPath + main.id).filter(nonEmpty);
+      commentTags = renderMainlineCommentsOf(ctx, main, conceal, true, opts.parentPath + main.id).filter(
+        nonEmpty
+      );
     if (!cs[1] && isEmpty(commentTags) && !main.forceVariation)
       return ((isWhite ? [moveView.renderIndex(main.ply, false)] : []) as MaybeVNodes).concat(
         renderMoveAndChildrenOf(ctx, main, {
@@ -69,7 +73,9 @@ function renderChildrenOf(ctx: Ctx, node: Tree.Node, opts: Opts): MaybeVNodes | 
     };
     return (isWhite ? [moveView.renderIndex(main.ply, false)] : ([] as MaybeVNodes))
       .concat(
-        main.forceVariation ? [] : [renderMoveOf(ctx, main, passOpts), isWhite ? emptyMove(passOpts.conceal) : null]
+        main.forceVariation
+          ? []
+          : [renderMoveOf(ctx, main, passOpts), isWhite ? emptyMove(passOpts.conceal) : null]
       )
       .concat([
         h(
@@ -84,7 +90,9 @@ function renderChildrenOf(ctx: Ctx, node: Tree.Node, opts: Opts): MaybeVNodes | 
           )
         ),
       ] as MaybeVNodes)
-      .concat(isWhite && mainChildren ? [moveView.renderIndex(main.ply, false), emptyMove(passOpts.conceal)] : [])
+      .concat(
+        isWhite && mainChildren ? [moveView.renderIndex(main.ply, false), emptyMove(passOpts.conceal)] : []
+      )
       .concat(mainChildren || []);
   }
   if (!cs[1]) return renderMoveAndChildrenOf(ctx, main, opts);
@@ -175,17 +183,17 @@ function renderMoveAndChildrenOf(ctx: Ctx, node: Tree.Node, opts: Opts): MaybeVN
         [h('index', '[...]')]
       ),
     ];
-  return ([renderMoveOf(ctx, node, opts)] as MaybeVNodes)
-    .concat(renderInlineCommentsOf(ctx, node, path))
-    .concat(opts.inline ? renderInline(ctx, opts.inline, opts) : null)
-    .concat(
-      renderChildrenOf(ctx, node, {
-        parentPath: path,
-        isMainline: opts.isMainline,
-        noConceal: opts.noConceal,
-        truncate: opts.truncate ? opts.truncate - 1 : undefined,
-      }) || []
-    );
+  return [
+    renderMoveOf(ctx, node, opts),
+    ...renderInlineCommentsOf(ctx, node, path),
+    opts.inline ? renderInline(ctx, opts.inline, opts) : null,
+    ...(renderChildrenOf(ctx, node, {
+      parentPath: path,
+      isMainline: opts.isMainline,
+      noConceal: opts.noConceal,
+      truncate: opts.truncate ? opts.truncate - 1 : undefined,
+    }) || []),
+  ];
 }
 
 function renderInline(ctx: Ctx, node: Tree.Node, opts: Opts): VNode {

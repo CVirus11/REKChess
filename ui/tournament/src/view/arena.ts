@@ -1,9 +1,10 @@
 import { h, VNode } from 'snabbdom';
-import { bind, dataIcon } from 'common/snabbdom';
+import * as licon from 'common/licon';
+import { bind, dataIcon, MaybeVNodes } from 'common/snabbdom';
 import TournamentController from '../ctrl';
 import { player as renderPlayer, ratio2percent, playerName } from './util';
 import { teamName } from './battle';
-import { MaybeVNodes, Pagination, PodiumPlayer, StandingPlayer } from '../interfaces';
+import { Pagination, PodiumPlayer, StandingPlayer } from '../interfaces';
 import * as button from './button';
 import * as pagination from '../pagination';
 
@@ -48,7 +49,7 @@ function playerTr(ctrl: TournamentController, player: StandingPlayer) {
         player.withdraw
           ? h('i', {
               attrs: {
-                'data-icon': '',
+                'data-icon': licon.Pause,
                 title: ctrl.trans.noarg('pause'),
               },
             })
@@ -61,7 +62,7 @@ function playerTr(ctrl: TournamentController, player: StandingPlayer) {
       h('td.sheet', renderScoreString(player.sheet.scores, !ctrl.data.noStreak)),
       h('td.total', [
         player.sheet.fire && !ctrl.data.isFinished
-          ? h('strong.is-gold', { attrs: dataIcon('') }, player.score)
+          ? h('strong.is-gold', { attrs: dataIcon(licon.Fire) }, player.score)
           : h('strong', player.score),
       ]),
     ]
@@ -82,12 +83,16 @@ function podiumStats(p: PodiumPlayer, berserkable: boolean, ctrl: TournamentCont
   const noarg = ctrl.trans.noarg,
     nb = p.nb;
   return h('table.stats', [
-    p.performance && ctrl.opts.showRatings ? h('tr', [h('th', noarg('performance')), h('td', p.performance)]) : null,
+    p.performance && ctrl.opts.showRatings
+      ? h('tr', [h('th', noarg('performance')), h('td', p.performance)])
+      : null,
     h('tr', [h('th', noarg('gamesPlayed')), h('td', nb.game)]),
     ...(nb.game
       ? [
           h('tr', [h('th', noarg('winRate')), h('td', ratio2percent(nb.win / nb.game))]),
-          berserkable ? h('tr', [h('th', noarg('berserkRate')), h('td', ratio2percent(nb.berserk / nb.game))]) : null,
+          berserkable
+            ? h('tr', [h('th', noarg('berserkRate')), h('td', ratio2percent(nb.berserk / nb.game))])
+            : null,
         ]
       : []),
   ]);
@@ -115,11 +120,16 @@ export function podium(ctrl: TournamentController) {
 }
 
 export function controls(ctrl: TournamentController, pag: Pagination): VNode {
-  return h('div.tour__controls', [h('div.pager', pagination.renderPager(ctrl, pag)), button.joinWithdraw(ctrl)]);
+  return h('div.tour__controls', [
+    h('div.pager', pagination.renderPager(ctrl, pag)),
+    button.joinWithdraw(ctrl),
+  ]);
 }
 
 export function standing(ctrl: TournamentController, pag: Pagination, klass?: string): VNode {
-  const tableBody = pag.currentPageResults ? pag.currentPageResults.map(res => playerTr(ctrl, res)) : lastBody;
+  const tableBody = pag.currentPageResults
+    ? pag.currentPageResults.map(res => playerTr(ctrl, res))
+    : lastBody;
   if (pag.currentPageResults) lastBody = tableBody;
   return h(
     'table.slist.tour__standing' + (klass ? '.' + klass : ''),

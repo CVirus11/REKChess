@@ -9,6 +9,7 @@ import lila.db.paginator.Adapter
 import lila.user.User
 import reactivemongo.api.bson.BSONNull
 import play.api.i18n.Lang
+import lila.user.Me
 
 final class UblogPaginator(
     colls: UblogColls,
@@ -40,19 +41,21 @@ final class UblogPaginator(
   def liveByCommunity(lang: Option[Lang], page: Int): Fu[Paginator[PreviewPost]] =
     Paginator(
       adapter = new AdapterLike[PreviewPost] {
-        val select             = $doc("live" -> true) ++ lang.?? { l => $doc("language" -> l.code) }
-        def nbResults: Fu[Int] = fuccess(10 * maxPerPage.value)
+        val select = $doc("live" -> true, "topics" $ne UblogTopic.offTopic) ++ lang.so { l =>
+          $doc("language" -> l.code)
+        }
+        def nbResults: Fu[Int]              = fuccess(10 * maxPerPage.value)
         def slice(offset: Int, length: Int) = aggregateVisiblePosts(select, offset, length)
       },
       currentPage = page,
       maxPerPage = maxPerPage
     )
 
-  def liveByLiked(me: User, page: Int): Fu[Paginator[PreviewPost]] =
+  def liveByLiked(page: Int)(using me: Me): Fu[Paginator[PreviewPost]] =
     Paginator(
-      adapter = new Adapter[PreviewPost](
+      adapter = Adapter[PreviewPost](
         collection = colls.post,
-        selector = $doc("live" -> true, "likers" -> me.id),
+        selector = $doc("live" -> true, "likers" -> me.userId),
         projection = previewPostProjection.some,
         sort = $sort desc "rank",
         readPreference = ReadPreference.secondaryPreferred
@@ -66,7 +69,7 @@ final class UblogPaginator(
       adapter = new AdapterLike[PreviewPost] {
         def nbResults: Fu[Int] = fuccess(10 * maxPerPage.value)
         def slice(offset: Int, length: Int) =
-          aggregateVisiblePosts($doc("topics" -> topic.value), offset, length)
+          aggregateVisiblePosts($doc("topics" -> topic), offset, length)
       },
       currentPage = page,
       maxPerPage = maxPerPage

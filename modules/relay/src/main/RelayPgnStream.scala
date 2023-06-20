@@ -5,6 +5,7 @@ import akka.stream.scaladsl.*
 import lila.study.{ ChapterRepo, PgnDump, StudyRepo }
 import lila.common.Bus
 import chess.format.pgn.PgnStr
+import lila.user.User
 
 final class RelayPgnStream(
     roundRepo: RelayRoundRepo,
@@ -13,14 +14,14 @@ final class RelayPgnStream(
     studyPgnDump: PgnDump
 )(using Executor):
 
-  def exportFullTour(tour: RelayTour): Source[PgnStr, ?] =
-    Source futureSource {
-      roundRepo.idsByTourOrdered(tour) flatMap { ids =>
+  def exportFullTourAs(tour: RelayTour, me: Option[User]): Source[PgnStr, ?] = Source.futureSource:
+    roundRepo
+      .idsByTourOrdered(tour)
+      .flatMap: ids =>
         studyRepo.byOrderedIds(StudyId.from[List, RelayRoundId](ids)) map { studies =>
-          Source(studies).flatMapConcat { studyPgnDump(_, flags) }
+          val visible = studies.filter(_.canView(me.map(_.id)))
+          Source(visible).flatMapConcat { studyPgnDump.chaptersOf(_, flags) }.throttle(16, 1.second)
         }
-      }
-    }
 
   private val flags = PgnDump.WithFlags(
     comments = false,
@@ -37,7 +38,7 @@ final class RelayPgnStream(
     fileR.replaceAllIn(s"lichess_broadcast_${tour.slug}_${tour.id}_$date", "")
 
   def streamRoundGames(rt: RelayRound.WithTourAndStudy): Source[PgnStr, ?] = {
-    if (rt.relay.hasStarted) studyPgnDump(rt.study, flags)
+    if (rt.relay.hasStarted) studyPgnDump.chaptersOf(rt.study, flags).throttle(16, 1 second)
     else Source.empty[PgnStr]
   } concat Source
     .queue[Set[StudyChapterId]](8, akka.stream.OverflowStrategy.dropHead)

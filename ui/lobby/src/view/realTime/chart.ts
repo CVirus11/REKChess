@@ -1,4 +1,5 @@
 import LobbyController from '../../ctrl';
+import * as licon from 'common/licon';
 import { bind } from 'common/snabbdom';
 import { h, VNode } from 'snabbdom';
 import { Hook } from '../../interfaces';
@@ -32,7 +33,12 @@ const clockX = (dur: number) => {
 function renderPlot(ctrl: LobbyController, hook: Hook) {
   const bottom = Math.max(0, ratingY(hook.rating) - 2),
     left = Math.max(0, clockX(hook.t) - 2),
-    klass = [hook.id, 'plot.new', hook.ra ? 'rated' : 'casual', hook.action === 'cancel' ? 'cancel' : ''].join('.');
+    klass = [
+      hook.id,
+      'plot.new',
+      hook.ra ? 'rated' : 'casual',
+      hook.action === 'cancel' ? 'cancel' : '',
+    ].join('.');
   return h('span#' + klass, {
     key: hook.id,
     attrs: {
@@ -133,7 +139,7 @@ function renderYAxis() {
 export function toggle(ctrl: LobbyController) {
   return h('i.toggle', {
     key: 'set-mode-list',
-    attrs: { title: ctrl.trans.noarg('list'), 'data-icon': '' },
+    attrs: { title: ctrl.trans.noarg('list'), 'data-icon': licon.List },
     hook: bind('mousedown', _ => ctrl.setMode('list'), ctrl.redraw),
   });
 }
@@ -146,7 +152,8 @@ export function render(ctrl: LobbyController, hooks: Hook[]) {
         hook: bind(
           'click',
           e => {
-            if ((e.target as HTMLElement).classList.contains('plot')) ctrl.clickHook((e.target as HTMLElement).id);
+            if ((e.target as HTMLElement).classList.contains('plot'))
+              ctrl.clickHook((e.target as HTMLElement).id);
           },
           ctrl.redraw
         ),

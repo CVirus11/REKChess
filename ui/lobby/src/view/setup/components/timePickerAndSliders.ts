@@ -106,7 +106,7 @@ export const timePickerAndSliders = (ctrl: LobbyController, allowAnonymous = fal
   const { trans, setupCtrl } = ctrl;
   return h(
     'div.time-mode-config.optional-config',
-    ctrl.opts.blindMode
+    lichess.blindMode
       ? renderBlindModeTimePickers(ctrl, allowAnonymous)
       : [
           renderTimeModePicker(ctrl, allowAnonymous),
@@ -114,7 +114,9 @@ export const timePickerAndSliders = (ctrl: LobbyController, allowAnonymous = fal
             ? h('div.time-choice.range', [
                 `${trans('minutesPerSide')}: `,
                 h('span', showTime(setupCtrl.time())),
-                inputRange(0, 38, setupCtrl.timeV, { failure: !setupCtrl.validTime() || !setupCtrl.validAiTime() }),
+                inputRange(0, 38, setupCtrl.timeV, {
+                  failure: !setupCtrl.validTime() || !setupCtrl.validAiTime(),
+                }),
               ])
             : null,
           setupCtrl.timeMode() === 'realTime'

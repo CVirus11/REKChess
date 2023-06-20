@@ -25,6 +25,6 @@
   <string name="currentRoundUrl">Одкликованя теперішнього тура</string>
   <string name="currentGameUrl">Одкликованя теперішньої бавкы</string>
   <string name="downloadAllRounds">Стерьхати вшыткі рунды</string>
-  <string name="definitivelyDeleteRound" comment="definitivelyDeleteRound&#10;&#10;Refers to live tournaments being broadcast on lichess&#10;&#10;Description (also translateable): Delete all games of this round. The source will need to be active in order to re-create them.">Стерти вшытку рунду ай бавкы їв.</string>
+  <string name="definitivelyDeleteRound">Стерти вшытку рунду ай бавкы їв.</string>
   <string name="deleteAllGamesOfThisRound">Стерти вшыткі бавкы сьої рунды. Жерело має быти актівным, обы учинити їх щи раз.</string>
 </resources>

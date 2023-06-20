@@ -8,10 +8,11 @@ import lila.appeal.Appeal
 import chess.variant.Variant
 import lila.clas.{ Clas, ClasInvite }
 import lila.challenge.Challenge
+import lila.socket.Socket.Sri
 
 // These are only meant for the play router,
 // so that controllers can take richer types than routes allow
-given gameId: Conversion[String, GameId]                                 = lila.game.Game.strToId(_)
+given gameId: Conversion[String, GameId]                                 = GameId.take(_)
 given gameFull: Conversion[String, GameFullId]                           = GameFullId(_)
 given gameAny: Conversion[String, GameAnyId]                             = GameAnyId(_)
 given Conversion[String, StudyId]                                        = StudyId(_)
@@ -27,6 +28,7 @@ given Conversion[String, UblogPostId]                                    = Ublog
 given Conversion[String, ForumCategId]                                   = ForumCategId(_)
 given Conversion[String, ForumTopicId]                                   = ForumTopicId(_)
 given Conversion[String, ForumPostId]                                    = ForumPostId(_)
+given Conversion[String, Sri]                                            = Sri(_)
 given challengeId: Conversion[String, Challenge.Id]                      = Challenge.Id(_)
 given appealId: Conversion[String, Appeal.Id]                            = Appeal.Id(_)
 given reportId: Conversion[String, Report.Id]                            = Report.Id(_)

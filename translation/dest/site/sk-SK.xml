@@ -97,11 +97,13 @@
   </plurals>
   <string name="dtzWithRounding">DTZ50\" so zaokrúhlením, vychádzajúci s počtu polťahov až do najbližšieho brania alebo ťahu pešiakom</string>
   <string name="noGameFound">Nenašla sa žiadna partia</string>
+  <string name="maxDepthReached">Dosiahnutá maximálna hĺbka!</string>
   <string name="maybeIncludeMoreGamesFromThePreferencesMenu">Možno vyberte viac partií z menu preferencií?</string>
   <string name="openings">Otvorenia</string>
   <string name="openingExplorer">Prieskumník otvorení</string>
   <string name="openingEndgameExplorer">Prieskumník otvorení/koncoviek</string>
   <string name="xOpeningExplorer">%s prieskumník otvorení</string>
+  <string name="playFirstOpeningEndgameExplorerMove">Hrať prvý ťah navrhnutý prieskumníkom otorení/koncoviek</string>
   <string name="winPreventedBy50MoveRule">Výhre zabránilo pravidlo 50-tich ťahov</string>
   <string name="lossSavedBy50MoveRule">Od prehry zachránilo pravidlo 50-tich ťahov</string>
   <string name="winOr50MovesByPriorMistake">Výhra alebo 50 ťahov na základe predchádzajúcej chyby</string>
@@ -123,6 +125,7 @@
   <string name="memory">Pamäť</string>
   <string name="infiniteAnalysis">Nekonečná analýza</string>
   <string name="removesTheDepthLimit">Odstráni obmedzenie hĺbky analýzy a spôsobí zahrievanie Vášho počítača</string>
+  <string name="engineManager">Správa motorov</string>
   <string name="blunder">Hrubá chyba</string>
   <string name="mistake">Chyba</string>
   <string name="inaccuracy">Nepresnosť</string>
@@ -164,6 +167,12 @@
     <item quantity="few">%s partie</item>
     <item quantity="many">%s partií</item>
     <item quantity="other">%s partií</item>
+  </plurals>
+  <plurals name="ratingXOverYGames">
+    <item quantity="one">%1$s rating z %2$s partie</item>
+    <item quantity="few">%1$s rating z %2$s partií</item>
+    <item quantity="many">%1$s rating z %2$s partií</item>
+    <item quantity="other">%1$s rating z %2$s partií</item>
   </plurals>
   <plurals name="nbBookmarks">
     <item quantity="one">%s záložka</item>
@@ -270,10 +279,10 @@
   </plurals>
   <string name="gamesPlayed">Odohraných partií</string>
   <plurals name="nbGamesWithYou">
-    <item quantity="one">%s hra s Vami</item>
-    <item quantity="few">%s hry s Vami</item>
-    <item quantity="many">%s hier s Vami</item>
-    <item quantity="other">%s hier s Vami</item>
+    <item quantity="one">%s partia s Vami</item>
+    <item quantity="few">%s partie s Vami</item>
+    <item quantity="many">%s partií s Vami</item>
+    <item quantity="other">%s partií s Vami</item>
   </plurals>
   <string name="cancel">Zrušiť</string>
   <string name="whiteTimeOut">Bielemu došiel čas</string>
@@ -384,20 +393,27 @@
     <item quantity="many">%s štúdií</item>
     <item quantity="other">%s štúdií</item>
   </plurals>
+  <plurals name="nbSimuls">
+    <item quantity="one">%s simultánka</item>
+    <item quantity="few">%s simultánky</item>
+    <item quantity="many">%s simultánok</item>
+    <item quantity="other">%s simultánok</item>
+  </plurals>
   <string name="viewTournament">Zobraziť turnaj</string>
   <string name="backToTournament">Návrat do turnaja</string>
+  <string name="noDrawBeforeSwissLimit">V turnaji švajčiarskeho systému nie je možné remizovať pokiaľ sa neodohralo 30 ťahov.</string>
   <string name="thematic">Tematický</string>
   <plurals name="moreThanNbRatedGames">
-    <item quantity="one">≥ %s hodnotená hra</item>
-    <item quantity="few">≥ %s hodnotené hry</item>
-    <item quantity="many">≥ %s hodnotených hier</item>
-    <item quantity="other">≥ %s hodnotených hier</item>
+    <item quantity="one">≥ %s hodnotená partia</item>
+    <item quantity="few">≥ %s hodnotené partie</item>
+    <item quantity="many">≥ %s hodnotených partií</item>
+    <item quantity="other">≥ %s hodnotených partií</item>
   </plurals>
   <plurals name="moreThanNbPerfRatedGames">
-    <item quantity="one">≥ %1$s %2$s hodnotená hra</item>
-    <item quantity="few">≥ %1$s %2$s hodnotené hry</item>
-    <item quantity="many">≥ %1$s %2$s hodnotených hier</item>
-    <item quantity="other">≥ %1$s %2$s hodnotených hier</item>
+    <item quantity="one">≥ %1$s %2$s hodnotená partia</item>
+    <item quantity="few">≥ %1$s %2$s hodnotené partie</item>
+    <item quantity="many">≥ %1$s %2$s hodnotených partií</item>
+    <item quantity="other">≥ %1$s %2$s hodnotených partií</item>
   </plurals>
   <plurals name="needNbMorePerfGames">
     <item quantity="one">Potrebujete odohrať ešte %1$s %2$s hodnotenú partiu</item>
@@ -566,7 +582,7 @@
   <string name="previouslyOnLichessTV">Bolo na Lichess TV</string>
   <string name="onlinePlayers">Pripojení hráči</string>
   <string name="activePlayers">Najaktívnejší hráči</string>
-  <string name="bewareTheGameIsRatedButHasNoClock">Pozor, hra je bodovaná, ale bez času!</string>
+  <string name="bewareTheGameIsRatedButHasNoClock">Pozor, partia je hodnotená, ale bez časového limitu!</string>
   <string name="success">Úspešne vyriešené</string>
   <plurals name="nbGamesInPlay">
     <item quantity="one">%s rozohraná partia</item>
@@ -669,8 +685,8 @@
   <string name="clock">Tempo</string>
   <string name="opponent">Protihráč</string>
   <string name="learnMenu">Učiť sa</string>
-  <string name="studyMenu">Študuj</string>
-  <string name="practice">Precvičuj</string>
+  <string name="studyMenu">Štúdie</string>
+  <string name="practice">Tréning</string>
   <string name="community">Komunita</string>
   <string name="tools">Nástroje</string>
   <string name="increment">Prírastok</string>
@@ -744,6 +760,11 @@
   <string name="keyGoToStartOrEnd">ísť na začiatok/koniec</string>
   <string name="keyShowOrHideComments">zobraziť/skryť komentáre</string>
   <string name="keyEnterOrExitVariation">zvoliť/opustiť variant</string>
+  <string name="keyRequestComputerAnalysis">Požadujte analýzu počítačom, Poučte sa zo svojich chýb</string>
+  <string name="keyNextLearnFromYourMistakes">Ďalej (Poučte sa zo svojich chýb)</string>
+  <string name="keyNextBlunder">Ďalšia hrubá chyba</string>
+  <string name="keyNextMistake">Ďalšia chyba</string>
+  <string name="keyNextInaccuracy">Ďalšia nepresnosť</string>
   <string name="newTournament">Nový turnaj</string>
   <string name="tournamentHomeTitle">Šachový turnaj ponúka rôzne časové nastavenia partie a rôzne varianty</string>
   <string name="tournamentHomeDescription">Hrajte šachové turnaje s rýchlym tempom! Pridajte sa k oficiálnym plánovaným turnajom, alebo si vytvorte vlastný turnaj. Bullet, Blitz, Classical, Chess960, King of the Hill, Threecheck, a viac možností na výber pre nekonečnú šachovú zábavu.</string>
@@ -845,6 +866,7 @@
   <string name="invalidFen">Neplatný formát FEN</string>
   <string name="custom">Vlastná</string>
   <string name="notifications">Upozornenia</string>
+  <string name="notificationsX">Upozornenia: %1$s</string>
   <string name="perfRatingX">Rating: %s</string>
   <plurals name="nbSecondsToPlayTheFirstMove">
     <item quantity="one">%s sekunda na vykonanie prvého ťahu</item>
@@ -945,6 +967,8 @@
   <string name="useTheReportForm">použi nahlasovací formulár</string>
   <string name="toRequestSupport">Pre vyžiadanie podpory, %1$s</string>
   <string name="tryTheContactPage">vyskúšaj stránku Kontakt</string>
+  <string name="makeSureToRead">Určite si prečítajte %1$s</string>
+  <string name="theForumEtiquette">etiketu fóra</string>
   <string name="thisTopicIsArchived">Táto téma bola presunutá do archívu a nemožno už na ňu odpovedať.</string>
   <string name="joinTheTeamXToPost">Pripoj sa k %1$s, aby si mohol uverejňovať príspevky v tomto fóre</string>
   <string name="teamNamedX">%1$s tím</string>
@@ -961,8 +985,6 @@
   <string name="congratsYouWon">Gratulujeme, vyhrali ste!</string>
   <string name="gameVsX">v partii proti %1$s</string>
   <string name="resVsX">%1$s proti %2$s</string>
-  <string name="someoneReviewedYourCoachProfile">Niekto napísal recenziu Vášho profilu trénera.</string>
-  <string name="newPendingReview">Nová čakajúca recenzia</string>
   <string name="lostAgainstTOSViolator">Prehrali ste s niekým kto porušil pravidlá stránky Lichess</string>
   <string name="refundXpointsTimeControlY">Náhrada: %1$s %2$s ratingových bodov.</string>
   <string name="timeAlmostUp">Čas čoskoro vyprší!</string>
@@ -979,7 +1001,7 @@
 a ovplyvnia rating hráčov</string>
   <string name="onlyMembersOfTeam">Iba členovia tímu</string>
   <string name="noRestriction">Bez obmedzenia</string>
-  <string name="minimumRatedGames">Minimum hodnotených hier</string>
+  <string name="minimumRatedGames">Minimum hodnotených partií</string>
   <string name="minimumRating">Minimálny rating</string>
   <string name="maximumWeeklyRating">Maximálny týždenný rating</string>
   <string name="onlyTitled">Iba hráči s titulom</string>
@@ -1027,5 +1049,5 @@ Nechajte prázdne pre začatie partií zo základnej pozície!</string>
   <string name="lichessDbExplanation">Hodnotené partie vybraté spomedzi všetkých Lichess hráčov</string>
   <string name="switchSides">Vymeniť strany</string>
   <string name="closingAccountWithdrawAppeal">Zrušením Vášho účtu bude Vaše odvolanie stiahnuté</string>
-  <string name="ourEventTips" comment="ourEventTips&#10;&#10;Tips in the sense of advice.&#10;&#10;A link that leads to https://lichess.org/page/event-tips&#10;&#10;That page describes best practices for events such as tournaments. It includes guidance on configuring the tournament, advertising it, and rules about prizes.">Naše tipy ohľadom organizovania podujatí</string>
+  <string name="ourEventTips">Naše tipy ohľadom organizovania podujatí</string>
 </resources>

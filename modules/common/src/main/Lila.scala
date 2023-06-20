@@ -14,8 +14,6 @@ object Lila extends Lila:
   export ornicar.scalalib.extensions.{ given, * }
   export ornicar.scalalib.time.*
 
-  class useless extends annotation.nowarn("msg=unused")
-
   inline def nowNanos: Long  = System.nanoTime()
   inline def nowMillis: Long = System.currentTimeMillis()
   inline def nowCentis: Long = nowMillis / 10
@@ -27,14 +25,10 @@ object Lila extends Lila:
     import akka.util.Timeout
     import scala.concurrent.duration.*
 
-    given short: Timeout  = seconds(1)
-    given large: Timeout  = seconds(5)
-    given larger: Timeout = seconds(30)
+    given short: Timeout = apply(1.second)
+    given long: Timeout  = apply(5.seconds)
 
-    def apply(duration: FiniteDuration) = Timeout(duration)
-    def millis(s: Int): Timeout         = Timeout(s.millis)
-    def seconds(s: Int): Timeout        = Timeout(s.seconds)
-    def minutes(m: Int): Timeout        = Timeout(m.minutes)
+    def apply(duration: FiniteDuration) = akka.util.Timeout(duration)
 
   def some[A](a: A): Option[A] = Some(a)
 
@@ -44,17 +38,9 @@ trait Lila
     with lila.base.LilaUserId
     with cats.syntax.OptionSyntax
     with cats.syntax.ListSyntax
-    with lila.base.LilaLibraryExtensions:
+    with lila.base.LilaLibraryExtensions
+    with lila.base.JsonExtensions:
 
-  trait IntValue extends Any:
-    def value: Int
-    override def toString = value.toString
-  trait BooleanValue extends Any:
-    def value: Boolean
-    override def toString = value.toString
-  trait DoubleValue extends Any:
-    def value: Double
-    override def toString = value.toString
   trait StringValue extends Any:
     def value: String
     override def toString = value
@@ -62,9 +48,3 @@ trait Lila
   // replaces Product.unapply in play forms
   def unapply[P <: Product](p: P)(using m: scala.deriving.Mirror.ProductOf[P]): Option[m.MirroredElemTypes] =
     Some(Tuple.fromProductTyped(p))
-
-  import play.api.libs.json.{ JsObject, JsValue }
-  import lila.base.{ LilaJsObject, LilaJsValue }
-  // can't use extensions because of method name shadowing :(
-  implicit def toLilaJsObject(jo: JsObject): LilaJsObject = new LilaJsObject(jo)
-  implicit def toLilaJsValue(jv: JsValue): LilaJsValue    = new LilaJsValue(jv)

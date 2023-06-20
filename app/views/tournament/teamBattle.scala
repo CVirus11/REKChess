@@ -1,10 +1,10 @@
 package views.html
 package tournament
 
+import cats.syntax.all.*
 import controllers.routes
 import play.api.data.Form
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.tournament.TeamBattle
@@ -12,7 +12,7 @@ import lila.tournament.Tournament
 
 object teamBattle:
 
-  def edit(tour: Tournament, form: Form[?])(implicit ctx: Context) =
+  def edit(tour: Tournament, form: Form[?])(using WebContext) =
     views.html.base.layout(
       title = tour.name(),
       moreCss = cssTag("tournament.form"),
@@ -55,7 +55,7 @@ object teamBattle:
 
   private val scoreTag = tag("score")
 
-  def standing(tour: Tournament, standing: List[TeamBattle.RankedTeam])(implicit ctx: Context) =
+  def standing(tour: Tournament, standing: List[TeamBattle.RankedTeam])(using WebContext) =
     views.html.base.layout(
       title = tour.name(),
       moreCss = cssTag("tournament.show.team-battle")
@@ -87,7 +87,7 @@ object teamBattle:
     )
 
   def teamInfo(tour: Tournament, team: lila.team.Team.Mini, info: TeamBattle.TeamInfo)(using
-      ctx: Context
+      ctx: WebContext
   ) =
     views.html.base.layout(
       title = s"${tour.name()} • ${team.name}",
@@ -121,17 +121,16 @@ object teamBattle:
             )
           ),
           tbody(
-            info.topPlayers.zipWithIndex.map { case (player, index) =>
+            info.topPlayers.mapWithIndex: (player, index) =>
               tr(
                 td(index + 1),
                 td(
-                  (index < tour.teamBattle.??(_.nbLeaders)) option iconTag(""),
+                  (index < tour.teamBattle.so(_.nbLeaders)) option iconTag(licon.Crown),
                   userIdLink(player.userId.some)
                 ),
                 td(player.score),
                 ctx.pref.showRatings option td(player.performance)
               )
-            }
           )
         )
       )

@@ -1,5 +1,6 @@
 import { Ctrl, Challenge, ChallengeData, ChallengeDirection, ChallengeUser, TimeControl } from './interfaces';
 import { h, VNode } from 'snabbdom';
+import * as licon from 'common/licon';
 import { spinnerVdom as spinner } from 'common/spinner';
 import { opposite } from 'chessground/util';
 
@@ -8,7 +9,8 @@ export const loaded = (ctrl: Ctrl): VNode =>
     ? h('div#challenge-app.dropdown', h('div.initiating', spinner()))
     : h('div#challenge-app.links.dropdown.rendered', renderContent(ctrl));
 
-export const loading = (): VNode => h('div#challenge-app.links.dropdown.rendered', h('div.empty.loading', '-'));
+export const loading = (): VNode =>
+  h('div#challenge-app.links.dropdown.rendered', h('div.empty.loading', '-'));
 
 function renderContent(ctrl: Ctrl): VNode[] {
   const d = ctrl.data();
@@ -46,12 +48,14 @@ function challenge(ctrl: Ctrl, dir: ChallengeDirection) {
       },
       [
         h('div.content', [
-          h('div.content__text', [
+          h(`div.content__text#challenge-text-${c.id}`, [
             h('span.head', renderUser(dir === 'in' ? c.challenger : c.destUser, ctrl.showRatings)),
             h('span.desc', [
-              h('span.is.is2.color-icon.' + myColor),
+              h('span.is.color-icon.' + myColor),
               ' • ',
-              [ctrl.trans()(c.rated ? 'rated' : 'casual'), timeControl(c.timeControl), c.variant.name].join(' • '),
+              [ctrl.trans()(c.rated ? 'rated' : 'casual'), timeControl(c.timeControl), c.variant.name].join(
+                ' • '
+              ),
             ]),
           ]),
           h('i.perf', {
@@ -89,7 +93,8 @@ function inButtons(ctrl: Ctrl, c: Challenge): VNode[] {
         h('button.button.accept', {
           attrs: {
             type: 'submit',
-            'data-icon': '',
+            'aria-describedby': `challenge-text-${c.id}`,
+            'data-icon': licon.Checkmark,
             title: trans('accept'),
           },
           hook: onClick(ctrl.onRedirect),
@@ -99,7 +104,7 @@ function inButtons(ctrl: Ctrl, c: Challenge): VNode[] {
     h('button.button.decline', {
       attrs: {
         type: 'submit',
-        'data-icon': '',
+        'data-icon': licon.X,
         title: trans('decline'),
       },
       hook: onClick(() => ctrl.decline(c.id, 'generic')),
@@ -128,7 +133,7 @@ function outButtons(ctrl: Ctrl, c: Challenge) {
       h('span.waiting', ctrl.trans()('waiting')),
       h('a.view', {
         attrs: {
-          'data-icon': '',
+          'data-icon': licon.Eye,
           href: '/' + c.id,
           title: trans('viewInFullSize'),
         },
@@ -136,7 +141,7 @@ function outButtons(ctrl: Ctrl, c: Challenge) {
     ]),
     h('button.button.decline', {
       attrs: {
-        'data-icon': '',
+        'data-icon': licon.X,
         title: trans('cancel'),
       },
       hook: onClick(() => ctrl.cancel(c.id)),
@@ -189,7 +194,7 @@ const empty = (): VNode =>
     'div.empty.text',
     {
       attrs: {
-        'data-icon': '',
+        'data-icon': licon.InfoCircle,
       },
     },
     'No challenges.'

@@ -1,4 +1,5 @@
 import { h, Hooks, VNode } from 'snabbdom';
+import * as licon from 'common/licon';
 import { dataIcon } from 'common/snabbdom';
 import SwissCtrl from '../ctrl';
 
@@ -25,7 +26,10 @@ function clock(ctrl: SwissCtrl): VNode | undefined {
       }),
     ]);
   return h(`div.clock.clock-created.time-cache-${next.at}`, [
-    h('span.shy', ctrl.data.status == 'created' ? ctrl.trans.noarg('startingIn') : ctrl.trans.noarg('nextRound')),
+    h(
+      'span.shy',
+      ctrl.data.status == 'created' ? ctrl.trans.noarg('startingIn') : ctrl.trans.noarg('nextRound')
+    ),
     h('span.time.text', {
       hook: startClock(next.in + 1),
     }),
@@ -42,7 +46,7 @@ function ongoing(ctrl: SwissCtrl): VNode | undefined {
 export default function (ctrl: SwissCtrl): VNode {
   const greatPlayer = ctrl.data.greatPlayer;
   return h('div.swiss__main__header', [
-    h('i.img', dataIcon('')),
+    h('i.img', dataIcon(licon.Trophy)),
     h(
       'h1',
       greatPlayer

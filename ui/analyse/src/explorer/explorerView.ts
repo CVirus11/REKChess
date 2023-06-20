@@ -1,4 +1,5 @@
 import { h, VNode } from 'snabbdom';
+import * as licon from 'common/licon';
 import { numberFormat } from 'common/number';
 import { perf } from 'game/perf';
 import { bind, dataIcon, MaybeVNode, MaybeVNodes } from 'common/snabbdom';
@@ -14,7 +15,7 @@ import {
   OpeningGame,
   ExplorerDb,
 } from './interfaces';
-import ExplorerCtrl from './explorerCtrl';
+import ExplorerCtrl, { MAX_DEPTH } from './explorerCtrl';
 import { showTablebase } from './tablebaseView';
 
 function resultBar(move: OpeningMoveStats): VNode {
@@ -51,7 +52,13 @@ function showMoveTable(ctrl: AnalyseCtrl, data: OpeningData): VNode | null {
       : data.moves;
 
   return h('table.moves', [
-    h('thead', [h('tr', [h('th', trans('move')), h('th', trans('games')), h('th', trans('whiteDrawBlack'))])]),
+    h('thead', [
+      h('tr', [
+        h('th', trans('move')),
+        h('th', { attrs: { colspan: 2 } }, trans('games')),
+        h('th', trans('whiteDrawBlack')),
+      ]),
+    ]),
     h(
       'tbody',
       moveArrowAttributes(ctrl, { fen: data.fen, onClick: (_, uci) => uci && ctrl.explorerMove(uci) }),
@@ -67,7 +74,8 @@ function showMoveTable(ctrl: AnalyseCtrl, data: OpeningData): VNode | null {
           },
           [
             h('td', move.san[0] === 'P' ? move.san.slice(1) : move.san),
-            h('td', { attrs: { title: ((total / sumTotal) * 100).toFixed(1) + '%' } }, numberFormat(total)),
+            h('td', ((total / sumTotal) * 100).toFixed(0) + '%'),
+            h('td', numberFormat(total)),
             h('td', { attrs: { title: moveTooltip(ctrl, move) } }, resultBar(move)),
           ]
         );
@@ -187,12 +195,15 @@ function gameActions(ctrl: AnalyseCtrl, game: OpeningGame): VNode {
           attrs: { colspan: ctrl.explorer.db() == 'masters' ? 4 : 5 },
         },
         [
-          h('div.game_title', `${game.white.name} - ${game.black.name}, ${showResult(game.winner).text}, ${game.year}`),
+          h(
+            'div.game_title',
+            `${game.white.name} - ${game.black.name}, ${showResult(game.winner).text}, ${game.year}`
+          ),
           h('div.menu', [
             h(
               'a.text',
               {
-                attrs: dataIcon(''),
+                attrs: dataIcon(licon.Eye),
                 hook: bind('click', _ => openGame(ctrl, game.id)),
               },
               'View'
@@ -202,7 +213,7 @@ function gameActions(ctrl: AnalyseCtrl, game: OpeningGame): VNode {
                   h(
                     'a.text',
                     {
-                      attrs: dataIcon(''),
+                      attrs: dataIcon(licon.BubbleSpeech),
                       hook: bind('click', _ => send(false), ctrl.redraw),
                     },
                     'Cite'
@@ -210,7 +221,7 @@ function gameActions(ctrl: AnalyseCtrl, game: OpeningGame): VNode {
                   h(
                     'a.text',
                     {
-                      attrs: dataIcon(''),
+                      attrs: dataIcon(licon.PlusButton),
                       hook: bind('click', _ => send(true), ctrl.redraw),
                     },
                     'Insert'
@@ -220,7 +231,7 @@ function gameActions(ctrl: AnalyseCtrl, game: OpeningGame): VNode {
             h(
               'a.text',
               {
-                attrs: dataIcon(''),
+                attrs: dataIcon(licon.X),
                 hook: bind('click', _ => ctrl.explorer.gameMenu(null), ctrl.redraw),
               },
               'Close'
@@ -236,7 +247,7 @@ const closeButton = (ctrl: AnalyseCtrl): VNode =>
   h(
     'button.button.button-empty.text',
     {
-      attrs: dataIcon(''),
+      attrs: dataIcon(licon.X),
       hook: bind('click', ctrl.toggleExplorer, ctrl.redraw),
     },
     ctrl.trans.noarg('close')
@@ -247,7 +258,10 @@ const showEmpty = (ctrl: AnalyseCtrl, data?: OpeningData): VNode =>
     explorerTitle(ctrl.explorer),
     openingTitle(ctrl, data),
     h('div.message', [
-      h('strong', ctrl.trans.noarg('noGameFound')),
+      h(
+        'strong',
+        ctrl.trans.noarg(ctrl.explorer.root.node.ply >= MAX_DEPTH ? 'maxDepthReached' : 'noGameFound')
+      ),
       data?.queuePosition
         ? h('p.explanation', `Indexing ${data.queuePosition} other players first ...`)
         : !ctrl.explorer.config.fullHouse()
@@ -259,7 +273,11 @@ const showEmpty = (ctrl: AnalyseCtrl, data?: OpeningData): VNode =>
 const showGameEnd = (ctrl: AnalyseCtrl, title: string): VNode =>
   h('div.data.empty', [
     h('div.title', ctrl.trans.noarg('gameOver')),
-    h('div.message', [h('i', { attrs: dataIcon('') }), h('h3', ctrl.trans.noarg(title)), closeButton(ctrl)]),
+    h('div.message', [
+      h('i', { attrs: dataIcon(licon.InfoCircle) }),
+      h('h3', ctrl.trans.noarg(title)),
+      closeButton(ctrl),
+    ]),
   ]);
 
 const openingTitle = (ctrl: AnalyseCtrl, data?: OpeningData) => {
@@ -371,7 +389,7 @@ const explorerTitle = (explorer: ExplorerCtrl) => {
     h(
       'span.active.text.' + db,
       {
-        attrs: { title, ...dataIcon('') },
+        attrs: { title, ...dataIcon(licon.Book) },
         hook: db == 'player' ? bind('click', explorer.config.toggleColor, explorer.reload) : undefined,
       },
       nodes
@@ -399,7 +417,9 @@ const explorerTitle = (explorer: ExplorerCtrl) => {
               explorer.isIndexing() && !explorer.config.data.open()
                 ? h('i.ddloader', {
                     attrs: {
-                      title: queuePosition ? `Indexing ${queuePosition} other players first ...` : 'Indexing ...',
+                      title: queuePosition
+                        ? `Indexing ${queuePosition} other players first ...`
+                        : 'Indexing ...',
                     },
                   })
                 : undefined,
@@ -412,7 +432,8 @@ const explorerTitle = (explorer: ExplorerCtrl) => {
 };
 
 function showTitle(ctrl: AnalyseCtrl, variant: Variant) {
-  if (variant.key === 'standard' || variant.key === 'fromPosition') return ctrl.trans.noarg('openingExplorer');
+  if (variant.key === 'standard' || variant.key === 'fromPosition')
+    return ctrl.trans.noarg('openingExplorer');
   return ctrl.trans('xOpeningExplorer', variant.name);
 }
 
@@ -463,7 +484,7 @@ export default function (ctrl: AnalyseCtrl): VNode | undefined {
       h('button.fbt.toconf', {
         attrs: {
           'aria-label': configOpened ? 'Close configuration' : 'Open configuration',
-          ...dataIcon(configOpened ? '' : ''),
+          ...dataIcon(configOpened ? licon.X : licon.Gear),
         },
         hook: bind('click', () => ctrl.explorer.config.toggleOpen(), ctrl.redraw),
       }),

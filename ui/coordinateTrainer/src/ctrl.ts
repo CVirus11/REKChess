@@ -2,9 +2,18 @@ import { sparkline } from '@fnando/sparkline';
 import * as xhr from 'common/xhr';
 import { throttlePromiseDelay } from 'common/throttle';
 import { withEffect } from 'common';
+import { makeCtrl as makeVoiceCtrl, VoiceCtrl } from 'voice';
 import { storedBooleanProp, storedProp } from 'common/storage';
 import { Api as CgApi } from 'chessground/api';
-import { ColorChoice, TimeControl, CoordinateTrainerConfig, InputMethod, Mode, ModeScores, Redraw } from './interfaces';
+import {
+  ColorChoice,
+  TimeControl,
+  CoordinateTrainerConfig,
+  InputMethod,
+  Mode,
+  ModeScores,
+  Redraw,
+} from './interfaces';
 
 const orientationFromColorChoice = (colorChoice: ColorChoice): Color =>
   (colorChoice === 'random' ? ['white', 'black'][Math.round(Math.random())] : colorChoice) as Color;
@@ -35,6 +44,17 @@ const targetSvg = (target: 'current' | 'next'): string => `
 </g>
 `;
 
+const rankWords: { [_: string]: string } = {
+  one: '1',
+  two: '2',
+  three: '3',
+  four: '4',
+  five: '5',
+  six: '6',
+  seven: '7',
+  eight: '8',
+};
+
 export const DURATION = 30 * 1000;
 const TICK_DELAY = 50;
 
@@ -44,6 +64,7 @@ export default class CoordinateTrainerCtrl {
   hasPlayed = false;
   isAuth = document.body.hasAttribute('data-user');
   keyboardInput: HTMLInputElement;
+  voice: VoiceCtrl;
   modeScores: ModeScores = this.config.scores;
   nextKey: Key | '' = newKey('a1');
   playing = false;
@@ -77,6 +98,12 @@ export default class CoordinateTrainerCtrl {
     window.Mousetrap.bind('enter', () => (this.playing ? null : this.start()));
 
     window.addEventListener('resize', () => requestAnimationFrame(this.updateCharts), true);
+
+    this.voice = makeVoiceCtrl({ redraw: this.redraw, tpe: 'coords' });
+    lichess.mic.initRecognizer([...'abcdefgh', ...Object.keys(rankWords), 'start', 'stop'], {
+      partial: true,
+      listener: this.onVoice.bind(this),
+    });
   }
 
   colorChoice = withEffect<ColorChoice>(
@@ -113,7 +140,10 @@ export default class CoordinateTrainerCtrl {
     window.location.hash = `#${this.mode().substring(0, 4)}`;
   };
 
-  selectionEnabled = withEffect<boolean>(storedBooleanProp('coordinateTrainer.selectionEnabled', false), this.redraw);
+  selectionEnabled = withEffect<boolean>(
+    storedBooleanProp('coordinateTrainer.selectionEnabled', false),
+    this.redraw
+  );
 
   selectedFiles = new Set<Files>();
   selectedRanks = new Set<Ranks>();
@@ -171,9 +201,11 @@ export default class CoordinateTrainerCtrl {
     this.redraw
   );
 
-  toggleInputMethod = () => this.coordinateInputMethod(this.coordinateInputMethod() === 'text' ? 'buttons' : 'text');
+  toggleInputMethod = () =>
+    this.coordinateInputMethod(this.coordinateInputMethod() === 'text' ? 'buttons' : 'text');
 
   start = () => {
+    if (this.playing) return;
     this.playing = true;
     this.hasPlayed = true;
     this.score = 0;
@@ -187,7 +219,7 @@ export default class CoordinateTrainerCtrl {
     // In case random is selected, recompute orientation
     this.setOrientationFromColorChoice();
 
-    if (this.mode() === 'nameSquare') this.keyboardInput.focus();
+    if (this.mode() === 'nameSquare') this.keyboardInput?.focus();
 
     setTimeout(() => {
       // Advance coordinates twice in order to get an entirely new set
@@ -200,6 +232,7 @@ export default class CoordinateTrainerCtrl {
   };
 
   private tick = () => {
+    if (!this.playing) return;
     const timeSpent = Math.min(DURATION, new Date().getTime() - +this.timeAtStart);
     this.timeLeft = DURATION - timeSpent;
     this.redraw();
@@ -210,7 +243,8 @@ export default class CoordinateTrainerCtrl {
 
   advanceCoordinates = () => {
     this.currentKey = this.nextKey;
-    if (this.selectionEnabled() === true) this.nextKey = newKey(this.nextKey, this.selectedFiles, this.selectedRanks);
+    if (this.selectionEnabled() === true)
+      this.nextKey = newKey(this.nextKey, this.selectedFiles, this.selectedRanks);
     else this.nextKey = newKey(this.nextKey);
 
     if (this.mode() === 'nameSquare')
@@ -223,12 +257,13 @@ export default class CoordinateTrainerCtrl {
   };
 
   stop = () => {
+    if (!this.playing) return;
     this.playing = false;
     this.wrong = false;
 
     if (this.mode() === 'nameSquare') {
-      this.keyboardInput.blur();
-      this.keyboardInput.value = '';
+      this.keyboardInput?.blur();
+      if (this.keyboardInput) this.keyboardInput.value = '';
     }
 
     if (this.timeControl() === 'thirtySeconds') {
@@ -298,6 +333,17 @@ export default class CoordinateTrainerCtrl {
     // Mousetrap by default ignores key presses on inputs
     // when enter is pressed on a radio input, start training
     if (!this.playing && e.which === 13) this.start();
+  };
+
+  onVoice = (txt: string) => {
+    if (this.playing) {
+      if (txt.includes('stop')) {
+        this.stop();
+        return;
+      }
+      const words = txt.split(' ').map(w => rankWords[w] ?? w);
+      if (this.currentKey && words.join('').includes(this.currentKey)) this.handleCorrect();
+    } else if (txt.includes('start')) this.start();
   };
 
   onKeyboardInputKeyUp = (e: KeyboardEvent) => {

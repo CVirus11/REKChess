@@ -3,7 +3,7 @@ package lila.forum
 import akka.stream.scaladsl.*
 
 import lila.security.{ Granter as MasterGranter }
-import lila.user.User
+import lila.user.{ User, Me }
 
 final class ForumDelete(
     postRepo: ForumPostRepo,
@@ -15,22 +15,20 @@ final class ForumDelete(
     modLog: lila.mod.ModlogApi
 )(using Executor, akka.stream.Materializer):
 
-  def post(categId: ForumCategId, postId: ForumPostId, mod: User): Funit =
+  def post(categId: ForumCategId, postId: ForumPostId)(using mod: Me): Funit =
     postRepo.unsafe.byCategAndId(categId, postId) flatMapz { post =>
       postApi.viewOf(post) flatMapz { view =>
         doDelete(view) >> {
-          if (MasterGranter(_.ModerateForum)(mod))
+          if MasterGranter(_.ModerateForum)
+          then
             modLog.deletePost(
-              mod.id into ModId,
               post.userId,
               text = "%s / %s / %s".format(view.categ.name, view.topic.name, post.text)
             )
           else
-            fuccess {
-              logger.info(
-                s"${mod.username} deletes post by ${post.userId.??(_.value)} \"${post.text take 200}\""
-              )
-            }
+            fuccess:
+              logger.info:
+                s"${mod.username} deletes post by ${post.userId.so(_.value)} \"${post.text take 200}\""
         }
       }
     }
@@ -40,7 +38,7 @@ final class ForumDelete(
       .allByUserCursor(user)
       .documentSource()
       .mapAsyncUnordered(4) { post =>
-        postApi.viewOf(post) flatMap { _ ?? doDelete }
+        postApi.viewOf(post) flatMap { _ so doDelete }
       }
       .toMat(Sink.ignore)(Keep.left)
       .run()
@@ -48,13 +46,13 @@ final class ForumDelete(
 
   private def doDelete(view: PostView) =
     postRepo.isFirstPost(view.topic.id, view.post.id).flatMap {
-      case true =>
+      if _ then
         postRepo.idsByTopicId(view.topic.id) flatMap { postIds =>
           (postRepo removeByTopic view.topic.id zip topicRepo.remove(view.topic)) >>
             (categApi denormalize view.categ) >>-
             (indexer ! RemovePosts(postIds))
         }
-      case false =>
+      else
         postRepo.remove(view.post) >>
           (topicApi denormalize view.topic) >>
           (categApi denormalize view.categ) >>-

@@ -1,4 +1,5 @@
 import { h, VNode } from 'snabbdom';
+import * as licon from 'common/licon';
 import { snabModal } from 'common/modal';
 import { prop, Prop } from 'common';
 import { bindSubmit, bindNonPassive } from 'common/snabbdom';
@@ -122,7 +123,7 @@ export function view(ctrl: StudyFormCtrl): VNode {
       ctrl.redraw();
     },
     content: [
-      h('h2', ctrl.trans.noarg(ctrl.relay ? 'configureLiveBroadcast' : isNew ? 'createStudy' : 'editStudy')),
+      h('h2', ctrl.trans.noarg(ctrl.relay ? 'editRoundStudy' : isNew ? 'createStudy' : 'editStudy')),
       h(
         'form.form3',
         {
@@ -233,14 +234,17 @@ export function view(ctrl: StudyFormCtrl): VNode {
                 h(
                   'a.text',
                   {
-                    attrs: { 'data-icon': '', href: `/broadcast/${ctrl.relay.data.tour.id}/edit` },
+                    attrs: {
+                      'data-icon': licon.RadioTower,
+                      href: `/broadcast/${ctrl.relay.data.tour.id}/edit`,
+                    },
                   },
                   'Tournament settings'
                 ),
                 h(
                   'a.text',
                   {
-                    attrs: { 'data-icon': '', href: `/broadcast/round/${data.id}/edit` },
+                    attrs: { 'data-icon': licon.RadioTower, href: `/broadcast/round/${data.id}/edit` },
                   },
                   'Round settings'
                 ),
@@ -257,7 +261,9 @@ export function view(ctrl: StudyFormCtrl): VNode {
                   },
                   hook: bindNonPassive(
                     'submit',
-                    _ => isNew || prompt(ctrl.trans('confirmDeleteStudy', data.name))?.trim() === data.name.trim()
+                    _ =>
+                      isNew ||
+                      prompt(ctrl.trans('confirmDeleteStudy', data.name))?.trim() === data.name.trim()
                   ),
                 },
                 [h(emptyRedButton, ctrl.trans.noarg(isNew ? 'cancel' : 'deleteStudy'))]
@@ -271,7 +277,9 @@ export function view(ctrl: StudyFormCtrl): VNode {
                         action: '/study/' + data.id + '/clear-chat',
                         method: 'post',
                       },
-                      hook: bindNonPassive('submit', _ => confirm(ctrl.trans.noarg('deleteTheStudyChatHistory'))),
+                      hook: bindNonPassive('submit', _ =>
+                        confirm(ctrl.trans.noarg('deleteTheStudyChatHistory'))
+                      ),
                     },
                     [h(emptyRedButton, ctrl.trans.noarg('clearChat'))]
                   ),

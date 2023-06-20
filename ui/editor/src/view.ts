@@ -1,4 +1,5 @@
 import { h, VNode } from 'snabbdom';
+import * as licon from 'common/licon';
 import { MouchEvent, NumberPair } from 'chessground/types';
 import { dragNewPiece } from 'chessground/drag';
 import { eventPosition, opposite } from 'chessground/util';
@@ -49,7 +50,7 @@ function studyButton(ctrl: EditorCtrl, state: EditorState): VNode {
         {
           attrs: {
             type: 'submit',
-            'data-icon': '',
+            'data-icon': licon.StudyBoard,
             disabled: !state.legalFen,
           },
           class: {
@@ -181,8 +182,10 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
               );
             const epd = state.fen.split(' ').slice(0, 4).join(' ');
             const value =
-              (ctrl.cfg.positions.find(p => p.fen.startsWith(epd)) || ctrl.cfg.endgamePositions.find(p => p.epd == epd))
-                ?.epd || '';
+              (
+                ctrl.cfg.positions.find(p => p.fen.startsWith(epd)) ||
+                ctrl.cfg.endgamePositions.find(p => p.epd == epd)
+              )?.epd || '';
             return h(
               'select.positions',
               {
@@ -201,7 +204,10 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
               [
                 h('option', { attrs: { value: '' } }, ctrl.trans.noarg('setTheBoard')),
                 optgroup(ctrl.trans.noarg('popularOpenings'), ctrl.cfg.positions.map(positionOption)),
-                optgroup(ctrl.trans.noarg('endgamePositions'), ctrl.cfg.endgamePositions.map(endgamePosition2option)),
+                optgroup(
+                  ctrl.trans.noarg('endgamePositions'),
+                  ctrl.cfg.endgamePositions.map(endgamePosition2option)
+                ),
               ]
             );
           })(),
@@ -224,12 +230,12 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
             ),
           ]),
           h('div.actions', [
-            buttonStart(''),
-            buttonClear(''),
+            buttonStart(licon.Reload),
+            buttonClear(licon.Trash),
             h(
               'button.button.button-empty.text',
               {
-                attrs: { 'data-icon': '' },
+                attrs: { 'data-icon': licon.ChasingArrows },
                 on: {
                   click() {
                     ctrl.chessground!.toggleOrientation();
@@ -243,9 +249,11 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
               'a',
               {
                 attrs: {
-                  'data-icon': '',
+                  'data-icon': licon.Microscope,
                   rel: 'nofollow',
-                  ...(state.legalFen ? { href: ctrl.makeAnalysisUrl(state.legalFen, ctrl.bottomColor()) } : {}),
+                  ...(state.legalFen
+                    ? { href: ctrl.makeAnalysisUrl(state.legalFen, ctrl.bottomColor()) }
+                    : {}),
                 },
                 class: {
                   button: true,
@@ -273,7 +281,7 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
                   },
                 },
               },
-              [h('span.text', { attrs: { 'data-icon': '' } }, ctrl.trans.noarg('continueFromHere'))]
+              [h('span.text', { attrs: { 'data-icon': licon.Swords } }, ctrl.trans.noarg('continueFromHere'))]
             ),
             studyButton(ctrl, state),
           ]),

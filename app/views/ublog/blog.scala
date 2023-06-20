@@ -2,7 +2,6 @@ package views.html.ublog
 
 import controllers.routes
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
@@ -14,7 +13,7 @@ object blog:
 
   import views.html.ublog.{ post as postView }
 
-  def apply(user: User, blog: UblogBlog, posts: Paginator[UblogPost.PreviewPost])(implicit ctx: Context) =
+  def apply(user: User, blog: UblogBlog, posts: Paginator[UblogPost.PreviewPost])(using ctx: WebContext) =
     val title = trans.ublog.xBlog.txt(user.username)
     views.html.base.layout(
       moreCss = cssTag("ublog"),
@@ -47,7 +46,7 @@ object blog:
                     cls      := "atom",
                     st.title := "Atom RSS feed",
                     href     := routes.Ublog.userAtom(user.username),
-                    dataIcon := ""
+                    dataIcon := licon.RssFeed
                   )
                 )
             )
@@ -73,7 +72,7 @@ object blog:
   private def tierForm(blog: UblogBlog) = postForm(action := routes.Ublog.setTier(blog.id.full)) {
     val form = lila.ublog.UblogForm.tier.fill(blog.tier)
     frag(
-      span(dataIcon := "", cls := "text")("Set to:"),
+      span(dataIcon := licon.Agent, cls := "text")("Set to:"),
       form3.select(form("tier"), lila.ublog.UblogBlog.Tier.options)
     )
   }

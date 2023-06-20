@@ -10,7 +10,7 @@ import { StudyPracticeData, StudyPracticeCtrl } from './practice/interfaces';
 import { ctrl as commentFormCtrl, CommentForm } from './commentForm';
 import { ctrl as glyphFormCtrl, GlyphCtrl } from './studyGlyph';
 import { ctrl as studyFormCtrl } from './studyForm';
-import { ctrl as topicsCtrl, TopicsCtrl } from './topics';
+import TopicsCtrl from './topics';
 import { ctrl as notifCtrl } from './notif';
 import { ctrl as shareCtrl } from './studyShare';
 import { ctrl as tagsCtrl } from './studyTags';
@@ -49,7 +49,9 @@ import { SearchCtrl } from './studySearch';
 
 interface Handlers {
   path(d: WithWhoAndPos): void;
-  addNode(d: WithWhoAndPos & { d: string; n: Tree.Node; o: Opening; s: boolean; relay?: StudyChapterRelay }): void;
+  addNode(
+    d: WithWhoAndPos & { d: string; n: Tree.Node; o: Opening; s: boolean; relay?: StudyChapterRelay }
+  ): void;
   deleteNode(d: WithWhoAndPos): void;
   promote(d: WithWhoAndPos & { toMainline: boolean }): void;
   liking(d: WithWho & { l: { likes: number; me: boolean } }): void;
@@ -86,7 +88,7 @@ export default function (
   const send = ctrl.socket.send;
   const redraw = ctrl.redraw;
 
-  const relayRecProp = storedBooleanProp('relay.rec', true);
+  const relayRecProp = storedBooleanProp('analyse.relay.rec', true);
   const nonRelayRecMapProp = storedMap<boolean>('study.rec', 100, () => true);
   const chapterFlipMapProp = storedMap<boolean>('chapter.flip', 400, () => false);
 
@@ -115,6 +117,12 @@ export default function (
 
   const startTour = () => tours.study(ctrl);
 
+  const setTab = (tab: Tab) => {
+    relay?.tourShow.disable();
+    vm.tab(tab);
+    redraw();
+  };
+
   const members = memberCtrl({
     initDict: data.members,
     myId: practiceData ? undefined : ctrl.opts.userId,
@@ -134,7 +142,7 @@ export default function (
   const chapters = new StudyChaptersCtrl(
     data.chapters,
     send,
-    () => vm.tab('chapters'),
+    () => setTab('chapters'),
     chapterId => xhr.chapterConfig(data.id, chapterId),
     ctrl
   );
@@ -145,7 +153,9 @@ export default function (
 
   const multiBoard = new MultiBoardCtrl(data.id, redraw, ctrl.trans);
 
-  const relay = relayData ? new RelayCtrl(data.id, relayData, send, redraw, members, data.chapter) : undefined;
+  const relay = relayData
+    ? new RelayCtrl(data.id, relayData, send, redraw, members, data.chapter)
+    : undefined;
 
   const form = studyFormCtrl(
     (d, isNew) => {
@@ -199,7 +209,7 @@ export default function (
 
   const search = new SearchCtrl(relay?.fullRoundName() || data.name, chapters.list, setChapter, redraw);
 
-  const topics: TopicsCtrl = topicsCtrl(
+  const topics: TopicsCtrl = new TopicsCtrl(
     topics => send('setTopics', topics),
     () => data.topics || [],
     ctrl.trans,
@@ -229,7 +239,8 @@ export default function (
     lichess.pubsub.emit('chat.writeable', data.features.chat);
     lichess.pubsub.emit('chat.permissions', { local: canContribute });
     lichess.pubsub.emit('palantir.toggle', data.features.chat && !!members.myMember());
-    const computer: boolean = !isGamebookPlay() && !!(data.chapter.features.computer || data.chapter.practice);
+    const computer: boolean =
+      !isGamebookPlay() && !!(data.chapter.features.computer || data.chapter.practice);
     if (!computer) ctrl.getCeval().enabled(false);
     ctrl.getCeval().allowed(computer);
     if (!data.chapter.features.explorer) ctrl.explorer.disable();
@@ -278,7 +289,8 @@ export default function (
 
     if (vm.mode.sticky) {
       vm.chapterId = data.position.chapterId;
-      nextPath = (vm.justSetChapterId === vm.chapterId && chapters.localPaths[vm.chapterId]) || data.position.path;
+      nextPath =
+        (vm.justSetChapterId === vm.chapterId && chapters.localPaths[vm.chapterId]) || data.position.path;
     } else {
       nextPath = sameChapter
         ? prevPath
@@ -324,9 +336,19 @@ export default function (
 
   const currentNode = () => ctrl.node;
   const onMainline = () => ctrl.tree.pathIsMainline(ctrl.path);
-  const bottomColor = () => (ctrl.flipped ? opposite(data.chapter.setup.orientation) : data.chapter.setup.orientation);
+  const bottomColor = () =>
+    ctrl.flipped ? opposite(data.chapter.setup.orientation) : data.chapter.setup.orientation;
 
-  const share = shareCtrl(data, currentChapter, currentNode, onMainline, bottomColor, relay, redraw, ctrl.trans);
+  const share = shareCtrl(
+    data,
+    currentChapter,
+    currentNode,
+    onMainline,
+    bottomColor,
+    relay,
+    redraw,
+    ctrl.trans
+  );
 
   const practice: StudyPracticeCtrl | undefined = practiceData && practiceCtrl(ctrl, data, practiceData);
 
@@ -472,6 +494,7 @@ export default function (
       if (!ctrl.tree.pathExists(d.p.path)) return xhrReload();
       ctrl.tree.promoteAt(position.path, d.toMainline);
       if (vm.mode.sticky) ctrl.jump(ctrl.path);
+      ctrl.treeVersion++;
       redraw();
     },
     reload: xhrReload,
@@ -524,6 +547,7 @@ export default function (
     },
     chapters(d) {
       chapters.list(d);
+      if (vm.toolTab() == 'multiBoard' || (relay && relay.tourShow.active)) multiBoard.addResult(d);
       if (!currentChapter()) {
         vm.chapterId = d[0].id;
         if (!vm.mode.sticky) xhrReload();
@@ -608,6 +632,7 @@ export default function (
   return {
     data,
     form,
+    setTab,
     members,
     chapters,
     notif,

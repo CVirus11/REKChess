@@ -4,7 +4,6 @@ package auth
 import controllers.routes
 import play.api.data.{ Field, Form }
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.security.HcaptchaForm
@@ -12,7 +11,9 @@ import lila.user.User
 
 object bits:
 
-  def formFields(username: Field, password: Field, email: Option[Field], register: Boolean)(using Context) =
+  def formFields(username: Field, password: Field, email: Option[Field], register: Boolean)(using
+      WebContext
+  ) =
     frag(
       form3.group(
         username,
@@ -35,7 +36,7 @@ object bits:
       }
     )
 
-  def passwordReset(form: HcaptchaForm[?], fail: Boolean)(using Context) =
+  def passwordReset(form: HcaptchaForm[?], fail: Boolean)(using WebContext) =
     views.html.base.layout(
       title = trans.passwordReset.txt(),
       moreCss = cssTag("auth"),
@@ -45,7 +46,7 @@ object bits:
       main(cls := "auth auth-signup box box-pad")(
         boxTop(
           h1(
-            fail option span(cls := "is-red", dataIcon := ""),
+            fail option span(cls := "is-red", dataIcon := licon.X),
             trans.passwordReset()
           )
         ),
@@ -59,20 +60,22 @@ object bits:
       )
     }
 
-  def passwordResetSent(email: String)(using Context) =
+  def passwordResetSent(email: String)(using WebContext) =
     views.html.base.layout(
       title = trans.passwordReset.txt()
     ) {
       main(cls := "page-small box box-pad")(
-        boxTop(h1(cls := "is-green text", dataIcon := "")(trans.checkYourEmail())),
+        boxTop(h1(cls := "is-green text", dataIcon := licon.Checkmark)(trans.checkYourEmail())),
         p(trans.weHaveSentYouAnEmailTo(email)),
         p(trans.ifYouDoNotSeeTheEmailCheckOtherPlaces())
       )
     }
 
-  def passwordResetConfirm(u: User, token: String, form: Form[?], ok: Option[Boolean] = None)(using Context) =
+  def passwordResetConfirm(token: String, form: Form[?], ok: Option[Boolean] = None)(using WebContext)(using
+      me: Me
+  ) =
     views.html.base.layout(
-      title = s"${u.username} - ${trans.changePassword.txt()}",
+      title = s"${me.username} - ${trans.changePassword.txt()}",
       moreCss = cssTag("form3"),
       moreJs = frag(
         embedJsUnsafeLoadThen("""
@@ -84,11 +87,11 @@ object bits:
       main(cls := "page-small box box-pad")(
         boxTop(
           (ok match {
-            case Some(true)  => h1(cls := "is-green text", dataIcon := "")
-            case Some(false) => h1(cls := "is-red text", dataIcon := "")
+            case Some(true)  => h1(cls := "is-green text", dataIcon := licon.Checkmark)
+            case Some(false) => h1(cls := "is-red text", dataIcon := licon.X)
             case _           => h1
           })(
-            userLink(u, withOnline = false),
+            userLink(me.user, withOnline = false),
             " - ",
             trans.changePassword()
           )
@@ -109,7 +112,7 @@ object bits:
       )
     }
 
-  def magicLink(form: HcaptchaForm[?], fail: Boolean)(using Context) =
+  def magicLink(form: HcaptchaForm[?], fail: Boolean)(using WebContext) =
     views.html.base.layout(
       title = "Log in by email",
       moreCss = cssTag("auth"),
@@ -119,7 +122,7 @@ object bits:
       main(cls := "auth auth-signup box box-pad")(
         boxTop(
           h1(
-            fail option span(cls := "is-red", dataIcon := ""),
+            fail option span(cls := "is-red", dataIcon := licon.X),
             "Log in by email"
           )
         ),
@@ -134,18 +137,18 @@ object bits:
       )
     }
 
-  def magicLinkSent(using Context) =
+  def magicLinkSent(using WebContext) =
     views.html.base.layout(
       title = "Log in by email"
     ) {
       main(cls := "page-small box box-pad")(
-        boxTop(h1(cls := "is-green text", dataIcon := "")(trans.checkYourEmail())),
+        boxTop(h1(cls := "is-green text", dataIcon := licon.Checkmark)(trans.checkYourEmail())),
         p("We've sent you an email with a link."),
         p(trans.ifYouDoNotSeeTheEmailCheckOtherPlaces())
       )
     }
 
-  def tokenLoginConfirmation(user: User, token: String, referrer: Option[String])(using Context) =
+  def tokenLoginConfirmation(user: User, token: String, referrer: Option[String])(using WebContext) =
     views.html.base.layout(
       title = s"Log in as ${user.username}",
       moreCss = cssTag("form3")
@@ -194,7 +197,7 @@ body { margin-top: 45px; }
       )
     )
 
-  def tor()(using Context) =
+  def tor()(using WebContext) =
     views.html.base.layout(
       title = "Tor exit node"
     ) {
@@ -205,7 +208,7 @@ body { margin-top: 45px; }
       )
     }
 
-  def logout()(using Context) =
+  def logout()(using WebContext) =
     views.html.base.layout(
       title = trans.logOut.txt()
     ) {

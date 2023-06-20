@@ -1,7 +1,6 @@
 package views.html
 package account
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.pref.PrefCateg
@@ -17,9 +16,7 @@ object pref:
 
   private def setting(name: Frag, body: Frag) = st.section(h2(name), body)
 
-  def apply(u: lila.user.User, form: play.api.data.Form[?], categ: lila.pref.PrefCateg)(using
-      ctx: Context
-  ) =
+  def apply(u: lila.user.User, form: play.api.data.Form[?], categ: lila.pref.PrefCateg)(using WebContext) =
     account.layout(
       title = s"${bits.categName(categ)} - ${u.username} - ${preferences.txt()}",
       active = categ.slug
@@ -73,7 +70,7 @@ object pref:
               showPlayerRatings(),
               frag(
                 radios(form("ratings"), booleanChoices),
-                div(cls := "help text shy", dataIcon := "")(
+                div(cls := "help text shy", dataIcon := licon.InfoCircle)(
                   explainShowPlayerRatings()
                 )
               )
@@ -114,7 +111,7 @@ object pref:
               promoteToQueenAutomatically(),
               frag(
                 radios(form("behavior.autoQueen"), translatedAutoQueenChoices),
-                div(cls := "help text shy", dataIcon := "")(
+                div(cls := "help text shy", dataIcon := licon.InfoCircle)(
                   explainPromoteToQueenAutomatically()
                 )
               )
@@ -125,7 +122,13 @@ object pref:
             ),
             setting(
               moveConfirmation(),
-              radios(form("behavior.submitMove"), submitMoveChoices)
+              frag(
+                bitCheckboxes(form("behavior.submitMove"), submitMoveChoices),
+                div(cls := "help text shy", dataIcon := licon.InfoCircle)(
+                  "Multiple choices. ",
+                  explainCanThenBeTemporarilyDisabled()
+                )
+              )
             ),
             setting(
               confirmResignationAndDrawOffers(),
@@ -138,6 +141,10 @@ object pref:
             setting(
               inputMovesWithTheKeyboard(),
               radios(form("behavior.keyboardMove"), booleanChoices)
+            ),
+            setting(
+              "Input moves with your voice",
+              radios(form("behavior.voice"), booleanChoices)
             ),
             setting(
               snapArrowsToValidMoves(),
@@ -174,7 +181,7 @@ object pref:
               radios(form("insightShare"), translatedInsightShareChoices)
             )
           ),
-          p(cls := "saved text none", dataIcon := "")(yourPreferencesHaveBeenSaved())
+          p(cls := "saved text none", dataIcon := licon.Checkmark)(yourPreferencesHaveBeenSaved())
         )
       )
     }

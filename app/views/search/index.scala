@@ -2,7 +2,6 @@ package views.html.search
 
 import play.api.data.Form
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 import lila.common.paginator.Paginator
@@ -14,7 +13,7 @@ object index:
   import trans.search.*
 
   def apply(form: Form[?], paginator: Option[Paginator[lila.game.Game]] = None, nbGames: Long)(using
-      ctx: Context
+      ctx: WebContext
   ) =
     val commons = bits of form
     import commons.*

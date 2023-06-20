@@ -9,7 +9,15 @@ import debounce from 'common/debounce';
 import GamebookPlayCtrl from './study/gamebook/gamebookPlayCtrl';
 import type makeStudyCtrl from './study/studyCtrl';
 import throttle from 'common/throttle';
-import { AnalyseOpts, AnalyseData, ServerEvalData, Key, JustCaptured, NvuiPlugin, Redraw } from './interfaces';
+import {
+  AnalyseOpts,
+  AnalyseData,
+  ServerEvalData,
+  Key,
+  JustCaptured,
+  NvuiPlugin,
+  Redraw,
+} from './interfaces';
 import { Api as ChessgroundApi } from 'chessground/api';
 import { Autoplay, AutoplayDelay } from './autoplay';
 import { build as makeTree, path as treePath, ops as treeOps, TreeWrapper } from 'tree';
@@ -19,10 +27,8 @@ import { CevalCtrl, isEvalBetter, sanIrreversible, EvalMeta } from 'ceval';
 import { ctrl as treeViewCtrl, TreeView } from './treeView/treeView';
 import { defined, prop, Prop, toggle, Toggle } from 'common';
 import { DrawShape } from 'chessground/draw';
-import { ForecastCtrl } from './forecast/interfaces';
 import { lichessRules } from 'chessops/compat';
 import { make as makeEvalCache, EvalCache } from './evalCache';
-import { make as makeForecast } from './forecast/forecastCtrl';
 import { make as makeFork, ForkCtrl } from './fork';
 import { make as makePractice, PracticeCtrl } from './practice/practiceCtrl';
 import { make as makeRetro, RetroCtrl } from './retrospect/retroCtrl';
@@ -44,6 +50,7 @@ import ExplorerCtrl from './explorer/explorerCtrl';
 import { uciToMove } from 'chessground/util';
 import Persistence from './persistence';
 import pgnImport from './pgnImport';
+import ForecastCtrl from './forecast/forecastCtrl';
 
 export default class AnalyseCtrl {
   data: AnalyseData;
@@ -89,13 +96,14 @@ export default class AnalyseCtrl {
   flipped = false;
   embed: boolean;
   showComments = true; // whether to display comments in the move tree
-  showAutoShapes = storedBooleanProp('show-auto-shapes', true);
-  showGauge = storedBooleanProp('show-gauge', true);
-  showComputer = storedBooleanProp('show-computer', true);
-  showMoveAnnotation = storedBooleanProp('show-move-annotation', true);
+  showAutoShapes = storedBooleanProp('analyse.show-auto-shapes', true);
+  showGauge = storedBooleanProp('analyse.show-gauge', true);
+  showComputer = storedBooleanProp('analyse.show-computer', true);
+  showMoveAnnotation = storedBooleanProp('analyse.show-move-annotation', true);
   keyboardHelp: boolean = location.hash === '#keyboard';
   threatMode: Prop<boolean> = prop(false);
   treeView: TreeView;
+  treeVersion = 1; // increment to recreate tree
   cgVersion = {
     js: 1, // increment to recreate chessground
     dom: 1,
@@ -123,9 +131,13 @@ export default class AnalyseCtrl {
     this.embed = opts.embed;
     this.trans = opts.trans;
     this.treeView = treeViewCtrl(opts.embed ? 'inline' : 'column');
-    this.promotion = new PromotionCtrl(this.withCg, () => this.withCg(g => g.set(this.cgConfig)), this.redraw);
+    this.promotion = new PromotionCtrl(
+      this.withCg,
+      () => this.withCg(g => g.set(this.cgConfig)),
+      this.redraw
+    );
 
-    if (this.data.forecast) this.forecast = makeForecast(this.data.forecast, this.data, redraw);
+    if (this.data.forecast) this.forecast = new ForecastCtrl(this.data.forecast, this.data, redraw);
     if (this.opts.wiki) this.wiki = wikiTheory();
     if (window.LichessAnalyseNvui) this.nvui = window.LichessAnalyseNvui(this) as NvuiPlugin;
 
@@ -151,7 +163,8 @@ export default class AnalyseCtrl {
       : undefined;
     this.studyPractice = this.study ? this.study.practice : undefined;
 
-    if (location.hash === '#practice' || (this.study && this.study.data.chapter.practice)) this.togglePractice();
+    if (location.hash === '#practice' || (this.study && this.study.data.chapter.practice))
+      this.togglePractice();
     else if (location.hash === '#menu') lichess.requestIdleCallback(this.actionMenu.toggle, 500);
 
     keyboard.bind(this);
@@ -202,7 +215,9 @@ export default class AnalyseCtrl {
     if (this.explorer) this.explorer.destroy();
     this.explorer = new ExplorerCtrl(this, this.opts.explorer, this.explorer);
     this.gamePath =
-      this.synthetic || this.ongoing ? undefined : treePath.fromNodeList(treeOps.mainlineNodeList(this.tree.root));
+      this.synthetic || this.ongoing
+        ? undefined
+        : treePath.fromNodeList(treeOps.mainlineNodeList(this.tree.root));
     this.fork = makeFork(this);
 
     lichess.sound.preloadBoardSounds();
@@ -367,7 +382,8 @@ export default class AnalyseCtrl {
     this.autoScrollRequested = true;
   }
 
-  playedLastMoveMyself = () => !!this.justPlayed && !!this.node.uci && this.node.uci.startsWith(this.justPlayed);
+  playedLastMoveMyself = () =>
+    !!this.justPlayed && !!this.node.uci && this.node.uci.startsWith(this.justPlayed);
 
   jump(path: Tree.Path): void {
     const pathChanged = path !== this.path,
@@ -502,7 +518,11 @@ export default class AnalyseCtrl {
     const piece = this.chessground.state.pieces.get(dest);
     const isCapture = capture || (piece && piece.role == 'pawn' && orig[0] != dest[0]);
     this.sound[isCapture ? 'capture' : 'move']();
-    if (!this.promotion.start(orig, dest, (orig, dest, prom) => this.sendMove(orig, dest, capture, prom))) {
+    if (
+      !this.promotion.start(orig, dest, {
+        submit: (orig, dest, prom) => this.sendMove(orig, dest, capture, prom),
+      })
+    ) {
       this.sendMove(orig, dest, capture);
     }
   };
@@ -586,12 +606,14 @@ export default class AnalyseCtrl {
     this.tree.promoteAt(path, toMainline);
     this.jump(path);
     if (this.study) this.study.promote(path, toMainline);
+    this.treeVersion++;
   }
 
   forceVariation(path: Tree.Path, force: boolean): void {
     this.tree.forceVariationAt(path, force);
     this.jump(path);
     if (this.study) this.study.forceVariation(path, force);
+    this.treeVersion++;
   }
 
   reset(): void {
@@ -811,7 +833,10 @@ export default class AnalyseCtrl {
     if (!this.showComputer()) this.tree.removeComputerVariations();
     this.data.analysis = data.analysis;
     if (data.analysis)
-      data.analysis.partial = !!treeOps.findInMainline(data.tree, n => !n.eval && !!n.children.length && n.ply <= 300);
+      data.analysis.partial = !!treeOps.findInMainline(
+        data.tree,
+        n => !n.eval && !!n.children.length && n.ply <= 300
+      );
     if (data.division) this.data.game.division = data.division;
     if (this.retro) this.retro.onMergeAnalysisData();
     if (this.study) this.study.serverEval.onMergeAnalysisData();

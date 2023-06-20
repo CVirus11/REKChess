@@ -3,7 +3,6 @@ package views.html.lobby
 import controllers.routes
 import play.api.libs.json.Json
 
-import lila.api.Context
 import lila.app.mashup.Preload.Homepage
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
@@ -13,7 +12,7 @@ import lila.game.Pov
 
 object home:
 
-  def apply(homepage: Homepage)(using ctx: Context) =
+  def apply(homepage: Homepage)(using ctx: WebContext) =
     import homepage.*
     views.html.base.layout(
       title = "",
@@ -91,15 +90,21 @@ object home:
           div(cls := "lobby__spotlights")(
             events.map(bits.spotlight),
             relays.map(views.html.relay.bits.spotlight),
-            !ctx.isBot option frag(
-              lila.tournament.Spotlight.select(tours, ctx.me, 3 - events.size) map {
-                views.html.tournament.homepageSpotlight(_)
-              },
-              swiss map views.html.swiss.bits.homepageSpotlight,
-              simuls.filter(isFeaturable) map views.html.simul.bits.homepageSpotlight
-            )
+            !ctx.isBot option {
+              val nbManual = events.size + relays.size
+              val simulBBB = simuls.find(isFeaturable(_) && nbManual < 4)
+              val nbForced = nbManual + simulBBB.size
+              val tourBBBs = if nbForced > 3 then 0 else if nbForced == 3 then 1 else 3 - nbForced
+              frag(
+                lila.tournament.Spotlight.select(tours, ctx.me, tourBBBs) map {
+                  views.html.tournament.homepageSpotlight(_)
+                },
+                swiss.ifTrue(nbForced < 3) map views.html.swiss.bits.homepageSpotlight,
+                simulBBB map views.html.simul.bits.homepageSpotlight
+              )
+            }
           ),
-          if (ctx.isAuth)
+          if ctx.isAuth then
             div(cls := "timeline")(
               ctx.blind option h2("Timeline"),
               views.html.timeline entries userTimeline,
@@ -119,14 +124,12 @@ object home:
               a(href := "/about")(trans.aboutX("Lichess"), "...")
             )
         ),
-        featured map { g =>
-          div(cls := "lobby__tv")(
+        featured.map: g =>
+          div(cls := "lobby__tv"):
             views.html.game.mini(Pov naturalOrientation g, tv = true)
-          )
-        },
-        puzzle map { p =>
-          views.html.puzzle.embed.dailyLink(p)(cls := "lobby__puzzle")
-        },
+        ,
+        puzzle.map: p =>
+          views.html.puzzle.embed.dailyLink(p)(cls := "lobby__puzzle"),
         bits.lastPosts(lastPost, ublogPosts),
         ctx.noBot option bits.underboards(tours, simuls, leaderboard, tournamentWinners),
         div(cls := "lobby__support")(
@@ -138,7 +141,7 @@ object home:
             )
           ),
           a(href := "https://shop.spreadshirt.com/lichess-org")(
-            iconTag(""),
+            iconTag(licon.Tshirt),
             span(cls := "lobby__support__text")(
               strong("Swag Store"),
               span(trans.playChessInStyle())

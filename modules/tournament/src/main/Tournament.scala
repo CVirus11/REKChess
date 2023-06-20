@@ -7,10 +7,10 @@ import play.api.i18n.Lang
 import scala.util.chaining.*
 import ornicar.scalalib.ThreadLocalRandom
 
-import lila.common.GreatPlayer
 import lila.i18n.defaultLang
 import lila.rating.PerfType
 import lila.user.User
+import lila.gathering.GreatPlayer
 
 case class Tournament(
     id: TourId,
@@ -22,7 +22,7 @@ case class Tournament(
     position: Option[Fen.Opening],
     mode: Mode,
     password: Option[String] = None,
-    conditions: Condition.All,
+    conditions: TournamentCondition.All,
     teamBattle: Option[TeamBattle] = None,
     noBerserk: Boolean = false,
     noStreak: Boolean = false,
@@ -173,10 +173,10 @@ object Tournament:
   ) =
     Tournament(
       id = makeId,
-      name = name | (position match {
+      name = name | position.match
         case Some(pos) => Thematic.byFen(pos).fold("Custom position")(_.name.value)
         case None      => GreatPlayer.randomName
-      }),
+      ,
       status = Status.Created,
       clock = clock,
       minutes = minutes,
@@ -187,7 +187,7 @@ object Tournament:
       position = position,
       mode = mode,
       password = password,
-      conditions = Condition.All.empty,
+      conditions = TournamentCondition.All.empty,
       teamBattle = teamBattle,
       noBerserk = !berserkable,
       noStreak = !streakable,
@@ -228,4 +228,5 @@ object Tournament:
     case Paused         extends JoinResult("Your pause is not over yet".some)
     case Verdicts       extends JoinResult("Tournament restrictions".some)
     case MissingTeam    extends JoinResult("Missing team".some)
+    case PrizeBanned    extends JoinResult("You are not allowed to play in prized tournaments".some)
     case Nope           extends JoinResult("Couldn't join for some reason?".some)

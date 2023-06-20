@@ -1,4 +1,5 @@
 import { h, Hooks, VNode } from 'snabbdom';
+import * as licon from 'common/licon';
 import { dataIcon } from 'common/snabbdom';
 import TournamentController from '../ctrl';
 import perfIcons from 'common/perfIcons';
@@ -30,7 +31,10 @@ function clock(d: TournamentData): VNode | undefined {
           },
           hook: {
             insert(vnode) {
-              (vnode.elm as HTMLElement).setAttribute('datetime', '' + (Date.now() + d.secondsToStart! * 1000));
+              (vnode.elm as HTMLElement).setAttribute(
+                'datetime',
+                '' + (Date.now() + d.secondsToStart! * 1000)
+              );
             },
           },
         }),
@@ -54,13 +58,13 @@ function image(d: TournamentData): VNode | undefined {
       attrs: { src: lichess.assetUrl('images/' + s.iconImg) },
     });
   return h('i.img', {
-    attrs: dataIcon(s?.iconFont || ''),
+    attrs: dataIcon(s?.iconFont || licon.Trophy),
   });
 }
 
 function title(ctrl: TournamentController) {
   const d = ctrl.data;
-  if (hasFreq('marathon', d)) return h('h1', [h('i.fire-trophy', ''), d.fullName]);
+  if (hasFreq('marathon', d)) return h('h1', [h('i.fire-trophy', licon.Globe), d.fullName]);
   if (hasFreq('shield', d))
     return h('h1', [
       h(
@@ -90,7 +94,7 @@ function title(ctrl: TournamentController) {
           ' Arena',
         ]
       : [d.fullName]
-    ).concat(d.private ? [' ', h('span', { attrs: dataIcon('') })] : [])
+    ).concat(d.private ? [' ', h('span', { attrs: dataIcon(licon.Padlock) })] : [])
   );
 }
 

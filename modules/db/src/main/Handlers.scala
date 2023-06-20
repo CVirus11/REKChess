@@ -20,8 +20,8 @@ trait Handlers:
   )(using NotGiven[NoDbHandler[T]]): BSONHandler[T] =
     handler.as(sr.apply, rs.apply)
 
-  given userIdOfWriter[U, T](using idOf: UserIdOf[U], writer: BSONWriter[UserId]): BSONWriter[U] with
-    inline def writeTry(u: U) = writer.writeTry(idOf(u))
+  given userIdOfWriter[U: UserIdOf, T](using writer: BSONWriter[UserId]): BSONWriter[U] with
+    inline def writeTry(u: U) = writer.writeTry(u.id)
 
   given dateTimeHandler: BSONHandler[LocalDateTime] = quickHandler[LocalDateTime](
     { case v: BSONDateTime => millisToDateTime(v.value) },
@@ -38,17 +38,17 @@ trait Handlers:
   def isoHandler[A, B](to: A => B, from: B => A)(using handler: BSONHandler[B]): BSONHandler[A] =
     isoHandler(using Iso(from, to))(using handler)
 
-  def stringIsoHandler[A](implicit iso: StringIso[A]): BSONHandler[A] =
+  def stringIsoHandler[A](using iso: StringIso[A]): BSONHandler[A] =
     BSONStringHandler.as[A](iso.from, iso.to)
   def stringAnyValHandler[A](to: A => String, from: String => A): BSONHandler[A] =
     BSONStringHandler.as[A](from, to)
 
   def intAnyValHandler[A](to: A => Int, from: Int => A): BSONHandler[A] = BSONIntegerHandler.as[A](from, to)
 
-  def booleanIsoHandler[A](implicit iso: BooleanIso[A]): BSONHandler[A] =
+  def booleanIsoHandler[A](using iso: BooleanIso[A]): BSONHandler[A] =
     BSONBooleanHandler.as[A](iso.from, iso.to)
   def booleanAnyValHandler[A](to: A => Boolean, from: Boolean => A): BSONHandler[A] =
-    booleanIsoHandler(Iso(from, to))
+    booleanIsoHandler(using Iso(from, to))
 
   private def doubleAsIntHandler[A](to: A => Double, from: Double => A, multiplier: Int): BSONHandler[A] =
     intAnyValHandler[A](x => Math.round(to(x) * multiplier).toInt, x => from(x.toDouble / multiplier))
@@ -58,20 +58,6 @@ trait Handlers:
 
   def percentAsIntHandler[A](using p: Percent[A]): BSONHandler[A] =
     doubleAsIntHandler(p.value, p.apply, percentBsonMultiplier)
-
-  // def ratioAsIntHandler[A](to: A => Double, from: Double => A): BSONHandler[A] =
-  //   doubleAsIntHandler(to, from, ratioBsonMultiplier)
-
-  def floatIsoHandler[A](using iso: FloatIso[A]): BSONHandler[A] =
-    BSONFloatHandler.as[A](iso.from, iso.to)
-  def floatAnyValHandler[A](to: A => Float, from: Float => A): BSONHandler[A] =
-    floatIsoHandler(using Iso(from, to))
-
-  def bigDecimalIsoHandler[A](using iso: BigDecimalIso[A]): BSONHandler[A] =
-    BSONDecimalHandler.as[A](iso.from, iso.to)
-
-  def bigDecimalAnyValHandler[A](to: A => BigDecimal, from: BigDecimal => A): BSONHandler[A] =
-    bigDecimalIsoHandler(using Iso(from, to))
 
   def instantIsoHandler[A](using iso: Iso[Instant, A]): BSONHandler[A] =
     instantHandler.as[A](iso.from, iso.to)
@@ -120,6 +106,8 @@ trait Handlers:
 
   def typedMapHandlerIso[K, V: BSONHandler](using keyIso: StringIso[K]) =
     stringMapHandler[V].as[Map[K, V]](_.mapKeys(keyIso.from), _.mapKeys(keyIso.to))
+
+  def ifPresentHandler[A](a: A) = quickHandler({ case BSONBoolean(true) => a }, _ => BSONBoolean(true))
 
   given [T: BSONHandler]: BSONHandler[NonEmptyList[T]] =
     def listWriter = BSONWriter.collectionWriter[T, List[T]]

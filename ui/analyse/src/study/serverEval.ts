@@ -1,4 +1,5 @@
 import { AcplChart } from 'chart/dist/interface';
+import * as licon from 'common/licon';
 import { bind, onInsert } from 'common/snabbdom';
 import { spinnerVdom } from 'common/spinner';
 import { h, VNode } from 'snabbdom';
@@ -34,7 +35,12 @@ export function view(ctrl: ServerEval): VNode {
       hook: onInsert(el => {
         lichess.requestIdleCallback(async () => {
           await lichess.loadModule('chart.game');
-          ctrl.chart = await window.LichessChartGame!.acpl(el, ctrl.root.data, ctrl.root.mainline, ctrl.root.trans);
+          ctrl.chart = await window.LichessChartGame!.acpl(
+            el,
+            ctrl.root.data,
+            ctrl.root.mainline,
+            ctrl.root.trans
+          );
         }, 800);
       }),
     },
@@ -61,7 +67,7 @@ function requestButton(ctrl: ServerEval) {
             'a.button.text',
             {
               attrs: {
-                'data-icon': '',
+                'data-icon': licon.BarChart,
                 disabled: root.mainline.length < 5,
               },
               hook: bind('click', ctrl.request, root.redraw),

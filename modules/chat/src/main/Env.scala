@@ -15,7 +15,6 @@ private case class ChatConfig(
 )
 
 @Module
-@annotation.nowarn("msg=unused")
 final class Env(
     appConfig: Configuration,
     netDomain: NetDomain,
@@ -44,6 +43,5 @@ final class Env(
 
   lazy val panic = wire[ChatPanic]
 
-  scheduler.scheduleWithFixedDelay(timeoutCheckEvery, timeoutCheckEvery) { () =>
+  scheduler.scheduleWithFixedDelay(timeoutCheckEvery, timeoutCheckEvery): () =>
     timeout.checkExpired foreach api.userChat.reinstate
-  }

@@ -290,7 +290,8 @@
           bottom: $size;
           #{$start-direction}: $size;
           box-shadow: 0 0 0 $tag-inset-shadow-size $tag-hover inset;
-          box-shadow: 0 0 0 var(--tag-inset-shadow-size, $tag-inset-shadow-size) var(--tag-hover, $tag-hover) inset;
+          box-shadow: 0 0 0 var(--tag-inset-shadow-size, $tag-inset-shadow-size) var(--tag-hover, $tag-hover)
+            inset;
         }
       }
     }
@@ -580,7 +581,7 @@
     }
 
     /*
-        in "mix mode" the tags are inside the "input" element
+        in "mix mode" the tags are inside the input element
     */
     #{$self}__tag {
       // a developer can choose to have automatic horizontal margin ("1ch" advised) between tags or use manual keyboard spaces

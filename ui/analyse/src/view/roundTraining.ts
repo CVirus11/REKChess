@@ -2,6 +2,7 @@ import { h, thunk, VNode } from 'snabbdom';
 import AnalyseCtrl from '../ctrl';
 import { findTag } from '../study/studyChapters';
 import * as game from 'game';
+import * as licon from 'common/licon';
 import { bind, dataIcon } from 'common/snabbdom';
 
 type AdviceKind = 'inaccuracy' | 'mistake' | 'blunder';
@@ -13,7 +14,13 @@ interface Advice {
 }
 
 const renderRatingDiff = (rd: number | undefined): VNode | undefined =>
-  rd === 0 ? h('span', '±0') : rd && rd > 0 ? h('good', '+' + rd) : rd && rd < 0 ? h('bad', '−' + -rd) : undefined;
+  rd === 0
+    ? h('span', '±0')
+    : rd && rd > 0
+    ? h('good', '+' + rd)
+    : rd && rd < 0
+    ? h('bad', '−' + -rd)
+    : undefined;
 
 const renderPlayer = (ctrl: AnalyseCtrl, color: Color): VNode => {
   const p = game.getPlayer(ctrl.data, color);
@@ -47,7 +54,10 @@ function playerTable(ctrl: AnalyseCtrl, color: Color): VNode {
   return h('div.advice-summary__side', [
     h('div.advice-summary__player', [h(`i.is.color-icon.${color}`), renderPlayer(ctrl, color)]),
     ...advices.map(a => error(ctrl, d.analysis![color][a.kind], color, a)),
-    h('div.advice-summary__acpl', [h('strong', sideData.acpl), h('span', ctrl.trans.noarg('averageCentipawnLoss'))]),
+    h('div.advice-summary__acpl', [
+      h('strong', sideData.acpl),
+      h('span', ctrl.trans.noarg('averageCentipawnLoss')),
+    ]),
     h('div.advice-summary__accuracy', [
       h('strong', [sideData.accuracy, '%']),
       h('span', [
@@ -55,7 +65,7 @@ function playerTable(ctrl: AnalyseCtrl, color: Color): VNode {
         ' ',
         h('a', {
           attrs: {
-            'data-icon': '',
+            'data-icon': licon.InfoCircle,
             href: '/page/accuracy',
             target: '_blank',
           },
@@ -117,7 +127,7 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
             'a.button.text',
             {
               class: { active: !!ctrl.retro },
-              attrs: dataIcon(''),
+              attrs: dataIcon(licon.PlayTriangle),
               hook: bind('click', ctrl.toggleRetro, ctrl.redraw),
             },
             ctrl.trans.noarg('learnFromYourMistakes')
@@ -137,7 +147,7 @@ export function puzzleLink(ctrl: AnalyseCtrl): VNode | undefined {
         'a.button-link.text',
         {
           attrs: {
-            'data-icon': '',
+            'data-icon': licon.ArcheryTarget,
             href: `/training/${puzzle.key}/${ctrl.bottomColor()}`,
           },
         },

@@ -1,7 +1,6 @@
 package views.html
 package account
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -9,7 +8,7 @@ import controllers.routes
 
 object passwd:
 
-  def apply(form: play.api.data.Form[?])(implicit ctx: Context) =
+  def apply(form: play.api.data.Form[?])(using WebContext) =
     account.layout(
       title = trans.changePassword.txt(),
       active = "password",

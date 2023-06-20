@@ -1,13 +1,12 @@
 package lila.tournament
 package crud
 
-import scala.util.chaining.*
 import chess.{ Clock, Mode }
 import chess.format.Fen
 
 import lila.common.config.MaxPerPage
 import lila.common.paginator.Paginator
-import lila.db.dsl.{ *, given }
+import lila.db.dsl.*
 import lila.db.paginator.Adapter
 import lila.user.User
 import lila.tournament.BSONHandlers.given
@@ -30,9 +29,9 @@ final class CrudApi(tournamentRepo: TournamentRepo, crudForm: CrudForm):
       position = tour.position.map(_ into Fen.Epd),
       date = tour.startsAt.dateTime,
       image = ~tour.spotlight.flatMap(_.iconImg),
-      headline = tour.spotlight.??(_.headline),
-      description = tour.spotlight.??(_.description),
-      conditions = Condition.DataForm.AllSetup(tour.conditions),
+      headline = tour.spotlight.so(_.headline),
+      description = tour.spotlight.so(_.description),
+      conditions = tour.conditions,
       berserkable = !tour.noBerserk,
       rated = tour.isRated,
       streakable = tour.streakable,
@@ -115,8 +114,4 @@ final class CrudApi(tournamentRepo: TournamentRepo, crudForm: CrudForm):
       noStreak = !data.streakable,
       teamBattle = data.teamBattle option (tour.teamBattle | TeamBattle(Set.empty, 10)),
       hasChat = data.hasChat
-    ) pipe { tour =>
-      tour.copy(conditions =
-        data.conditions.convert(tour.perfType, Map.empty)
-      ) // the CRUD form doesn't support team restrictions so Map.empty is fine
-    }
+    )

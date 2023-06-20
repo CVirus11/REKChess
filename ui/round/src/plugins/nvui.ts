@@ -8,7 +8,7 @@ import renderCorresClock from '../corresClock/corresClockView';
 import { renderResult } from '../view/replay';
 import { plyStep } from '../round';
 import { onInsert } from '../util';
-import { Step, Position, Redraw, NvuiPlugin } from '../interfaces';
+import { Step, Position, NvuiPlugin } from '../interfaces';
 import * as game from 'game';
 import {
   renderSan,
@@ -35,6 +35,7 @@ import { renderSetting } from 'nvui/setting';
 import { Notify } from 'nvui/notify';
 import { commands } from 'nvui/command';
 import { throttled } from '../sound';
+import { Redraw } from 'common/snabbdom';
 
 const selectSound = throttled('select');
 const borderSound = throttled('outOfBound');
@@ -300,7 +301,12 @@ export default (window as any).LichessRoundNvui = function (redraw: Redraw): Nvu
   };
 };
 
-function createSubmitHandler(ctrl: RoundController, notify: (txt: string) => void, style: () => Style, $input: Cash) {
+function createSubmitHandler(
+  ctrl: RoundController,
+  notify: (txt: string) => void,
+  style: () => Style,
+  $input: Cash
+) {
   return (submitStoredPremove = false) => {
     const nvui = ctrl.nvui!;
 
@@ -336,7 +342,20 @@ function createSubmitHandler(ctrl: RoundController, notify: (txt: string) => voi
   };
 }
 
-const shortCommands = ['c', 'clock', 'l', 'last', 'abort', 'resign', 'draw', 'takeback', 'p', 's', 'o', 'opponent'];
+const shortCommands = [
+  'c',
+  'clock',
+  'l',
+  'last',
+  'abort',
+  'resign',
+  'draw',
+  'takeback',
+  'p',
+  's',
+  'o',
+  'opponent',
+];
 
 function isShortCommand(input: string): boolean {
   return shortCommands.includes(input.split(' ')[0].toLowerCase());
@@ -353,7 +372,11 @@ function onCommand(ctrl: RoundController, notify: (txt: string) => void, c: stri
   else if (lowered == 'o' || lowered == 'opponent') notify(playerText(ctrl, ctrl.data.opponent));
   else {
     const pieces = ctrl.chessground.state.pieces;
-    notify(commands.piece.apply(c, pieces, style) || commands.scan.apply(c, pieces, style) || `Invalid command: ${c}`);
+    notify(
+      commands.piece.apply(c, pieces, style) ||
+        commands.scan.apply(c, pieces, style) ||
+        `Invalid command: ${c}`
+    );
   }
 }
 
@@ -362,7 +385,8 @@ function anyClock(ctrl: RoundController, position: Position) {
     player = ctrl.playerAt(position);
   return (
     (ctrl.clock && renderClock(ctrl, player, position)) ||
-    (d.correspondence && renderCorresClock(ctrl.corresClock!, ctrl.trans, player.color, position, d.game.player)) ||
+    (d.correspondence &&
+      renderCorresClock(ctrl.corresClock!, ctrl.trans, player.color, position, d.game.player)) ||
     undefined
   );
 }

@@ -27,7 +27,10 @@ final class RelayRoundForm:
       },
       "syncUrlRound" -> optional(number(min = 1, max = 999)),
       "startsAt"     -> optional(ISOInstantOrTimestamp.mapping),
-      "period"       -> optional(number(min = 2, max = 60).into[Seconds])
+      "period"       -> optional(number(min = 2, max = 60).into[Seconds]),
+      "delay" -> optional(
+        number(min = 0, max = RelayDelay.maxSeconds.value).into[Seconds]
+      ) // don't increase the max
     )(Data.apply)(unapply)
       .verifying("This source requires a round number. See the new form field below.", !_.roundMissing)
 
@@ -52,7 +55,7 @@ object RelayRoundForm:
   case class GameIds(ids: List[GameId])
 
   private def toGameIds(ids: String): Option[GameIds] =
-    val list = ids.split(' ').view.map(i => Game strToId i.trim).filter(Game.validId).toList
+    val list = ids.split(' ').view.flatMap(i => GameId from i.trim).toList
     (list.sizeIs > 0 && list.sizeIs <= Study.maxChapters) option GameIds(list)
 
   private def validSource(source: String): Boolean =
@@ -96,7 +99,8 @@ object RelayRoundForm:
       syncUrl: Option[String] = None,
       syncUrlRound: Option[Int] = None,
       startsAt: Option[Instant] = None,
-      period: Option[Seconds] = None
+      period: Option[Seconds] = None,
+      delay: Option[Seconds] = None
   ):
 
     def requiresRound = syncUrl exists RelayRound.Sync.UpstreamUrl.LccRegex.matches
@@ -119,13 +123,14 @@ object RelayRoundForm:
     private def makeSync(user: User) =
       RelayRound.Sync(
         upstream = syncUrl.flatMap(cleanUrl).map { u =>
-          RelayRound.Sync.UpstreamUrl(s"$u${syncUrlRound.??(" " +)}")
+          RelayRound.Sync.UpstreamUrl(s"$u${syncUrlRound.so(" " +)}")
         } orElse gameIds.map { ids =>
           RelayRound.Sync.UpstreamIds(ids.ids)
         },
         until = none,
         nextAt = none,
-        delay = period ifTrue Granter(_.Relay)(user),
+        period = period ifTrue Granter.of(_.Relay)(user),
+        delay = delay,
         log = SyncLog.empty
       )
 
@@ -154,5 +159,6 @@ object RelayRoundForm:
         },
         syncUrlRound = relay.sync.upstream.flatMap(_.asUrl).flatMap(_.withRound.round),
         startsAt = relay.startsAt,
-        period = relay.sync.delay
+        period = relay.sync.period,
+        delay = relay.sync.delay
       )

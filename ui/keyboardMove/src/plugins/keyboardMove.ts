@@ -1,5 +1,5 @@
 import { Dests, files } from 'chessground/types';
-import { sanWriter, SanToUci } from 'chess';
+import { sanWriter, SanToUci, destsToUcis } from 'chess';
 import { KeyboardMove } from '../main';
 
 const keyRegex = /^[a-h][1-8]$/;
@@ -68,7 +68,8 @@ export default (window as any).LichessKeyboardMove = (opts: Opts) => {
     } else if (legalSans && v.match(fileRegex)) {
       // do nothing
     } else if (legalSans && (selectedKey.slice(0, 1) + v).match(promotionRegex)) {
-      const promotionSan = selectedKey && selectedKey.slice(0, 1) !== v.slice(0, 1) ? selectedKey.slice(0, 1) + v : v;
+      const promotionSan =
+        selectedKey && selectedKey.slice(0, 1) !== v.slice(0, 1) ? selectedKey.slice(0, 1) + v : v;
       const foundUci = sanToUci(promotionSan.replace('=', '').slice(0, -1), legalSans);
       if (!foundUci) return;
       opts.ctrl.promote(foundUci.slice(0, 2) as Key, foundUci.slice(2) as Key, v.slice(-1).toUpperCase());
@@ -195,16 +196,6 @@ function sanCandidates(san: string, legalSans: SanToUci): San[] {
   return Object.keys(legalSans).filter(function (s) {
     return s.toLowerCase().startsWith(lowered);
   });
-}
-
-function destsToUcis(dests: Dests): Uci[] {
-  const ucis: string[] = [];
-  for (const [orig, d] of dests) {
-    d.forEach(function (dest) {
-      ucis.push(orig + dest);
-    });
-  }
-  return ucis;
 }
 
 function focusChat() {

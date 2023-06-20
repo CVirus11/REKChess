@@ -1,7 +1,6 @@
 package views.html
 package account
 
-import lila.api.Context
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
 
@@ -11,13 +10,13 @@ object close:
 
   import trans.settings.*
 
-  def apply(u: lila.user.User, form: play.api.data.Form[?], managed: Boolean)(using Context) =
+  def apply(form: play.api.data.Form[?], managed: Boolean)(using WebContext)(using me: Me) =
     account.layout(
-      title = s"${u.username} - ${closeAccount.txt()}",
+      title = s"${me.username} - ${closeAccount.txt()}",
       active = "close"
     ) {
       div(cls := "account box box-pad")(
-        boxTop(h1(cls := "text", dataIcon := "")(closeAccount())),
+        boxTop(h1(cls := "text", dataIcon := licon.CautionCircle)(closeAccount())),
         if (managed)
           p(managedAccountCannotBeClosed())
         else
@@ -27,10 +26,10 @@ object close:
             form3.passwordModified(form("passwd"), trans.password())(autofocus, autocomplete := "off"),
             form3.actions(
               frag(
-                a(href := routes.User.show(u.username))(changedMindDoNotCloseAccount()),
+                a(href := routes.User.show(me.username))(changedMindDoNotCloseAccount()),
                 form3.submit(
                   closeAccount(),
-                  icon = "".some,
+                  icon = licon.CautionCircle.some,
                   confirm = closingIsDefinitive.txt().some
                 )(cls := "button-red")
               )

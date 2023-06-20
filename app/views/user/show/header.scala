@@ -3,7 +3,6 @@ package views.html.user.show
 import controllers.report.routes.{ Report as reportRoutes }
 import controllers.routes
 
-import lila.api.Context
 import lila.app.mashup.UserInfo
 import lila.app.templating.Environment.{ given, * }
 import lila.app.ui.ScalatagsTemplate.{ *, given }
@@ -15,7 +14,7 @@ object header:
   private val dataToints = attr("data-toints")
   private val dataTab    = attr("data-tab")
 
-  def apply(u: User, info: UserInfo, angle: UserInfo.Angle, social: UserInfo.Social)(using ctx: Context) =
+  def apply(u: User, info: UserInfo, angle: UserInfo.Angle, social: UserInfo.Social)(using ctx: WebContext) =
     frag(
       div(cls := "box__top user-show__header")(
         if (u.isPatron)
@@ -46,10 +45,22 @@ object header:
         div(cls := "number-menu")(
           u.noBot option a(
             href       := routes.UserTournament.path(u.username, "recent"),
-            cls        := "nm-item tournament_stats",
+            cls        := "nm-item",
             dataToints := u.toints
           )(
             splitNumber(trans.nbTournamentPoints.pluralSame(u.toints))
+          ),
+          info.nbSimuls > 0 option a(
+            href := routes.Simul.byUser(u.username),
+            cls  := "nm-item"
+          )(
+            splitNumber(trans.nbSimuls.pluralSame(info.nbSimuls))
+          ),
+          info.nbRelays > 0 option a(
+            href := routes.RelayTour.by(u.username),
+            cls  := "nm-item"
+          )(
+            splitNumber(trans.broadcast.nbBroadcasts.pluralSame(info.nbRelays))
           ),
           a(href := routes.Study.byOwnerDefault(u.username), cls := "nm-item")(
             splitNumber(trans.`nbStudies`.pluralSame(info.nbStudies))
@@ -64,7 +75,7 @@ object header:
             cls  := "nm-item",
             href := routes.Ublog.index(u.username)
           )(
-            splitNumber(s"${info.ublog.??(_.nbPosts)} blog posts")
+            splitNumber(s"${info.ublog.so(_.nbPosts)} blog posts")
           ),
           (ctx.isAuth && !ctx.is(u)) option
             a(cls := "nm-item note-zone-toggle")(splitNumber(s"${social.notes.size} Notes"))
@@ -75,13 +86,13 @@ object header:
               cls  := "btn-rack__btn",
               href := routes.Account.profile,
               titleOrText(trans.editProfile.txt()),
-              dataIcon := ""
+              dataIcon := licon.Gear
             ),
             a(
               cls  := "btn-rack__btn",
               href := routes.Relation.blocks(),
               titleOrText(trans.listBlockedPlayers.txt()),
-              dataIcon := ""
+              dataIcon := licon.NotAllowed
             )
           ),
           isGranted(_.UserModView) option
@@ -89,13 +100,13 @@ object header:
               cls  := "btn-rack__btn mod-zone-toggle",
               href := routes.User.mod(u.username),
               titleOrText("Mod zone (Hotkey: m)"),
-              dataIcon := ""
+              dataIcon := licon.Agent
             ),
           a(
             cls  := "btn-rack__btn",
             href := routes.User.tv(u.username),
             titleOrText(trans.watchGames.txt()),
-            dataIcon := ""
+            dataIcon := licon.AnalogTv
           ),
           !ctx.is(u) option views.html.relation.actions(
             u.light,
@@ -107,19 +118,19 @@ object header:
             cls  := "btn-rack__btn",
             href := s"${routes.UserAnalysis.index}#explorer/${u.username}",
             titleOrText(trans.openingExplorer.txt()),
-            dataIcon := ""
+            dataIcon := licon.Book
           ),
           a(
             cls  := "btn-rack__btn",
             href := routes.User.download(u.username),
             titleOrText(trans.exportGames.txt()),
-            dataIcon := ""
+            dataIcon := licon.Download
           ),
           (ctx.isAuth && ctx.noKid && !ctx.is(u)) option a(
             titleOrText(trans.reportXToModerators.txt(u.username)),
             cls      := "btn-rack__btn",
             href     := s"${reportRoutes.form}?username=${u.username}",
-            dataIcon := ""
+            dataIcon := licon.CautionTriangle
           )
         )
       ),
@@ -140,7 +151,7 @@ object header:
               div(cls := "user-infos")(
                 !ctx.is(u) option frag(
                   u.lame option div(cls := "warning tos_warning")(
-                    span(dataIcon := "", cls := "is4"),
+                    span(dataIcon := licon.CautionCircle, cls := "is4"),
                     trans.thisAccountViolatedTos()
                   )
                 ),
@@ -205,7 +216,7 @@ object header:
                 )
               ),
               info.insightVisible option
-                a(cls := "insight", href := routes.Insight.index(u.username), dataIcon := "")(
+                a(cls := "insight", href := routes.Insight.index(u.username), dataIcon := licon.Target)(
                   span(
                     strong("Chess Insights"),
                     em("Analytics from ", if (ctx.is(u)) "your" else s"${u.username}'s", " games")
@@ -214,8 +225,8 @@ object header:
             )
           )
       },
-      info.ublog.??(_.latests).nonEmpty option div(cls := "user-show__blog ublog-post-cards")(
-        info.ublog.??(_.latests) map { views.html.ublog.post.card(_, showAuthor = false) }
+      info.ublog.so(_.latests).nonEmpty option div(cls := "user-show__blog ublog-post-cards")(
+        info.ublog.so(_.latests) map { views.html.ublog.post.card(_, showAuthor = false) }
       ),
       div(cls := "angles number-menu number-menu--tabs menu-box-pop")(
         a(
@@ -246,7 +257,7 @@ object header:
       )
     )
 
-  def noteZone(u: User, notes: List[lila.user.Note])(implicit ctx: Context) = div(cls := "note-zone")(
+  def noteZone(u: User, notes: List[lila.user.Note])(using ctx: WebContext) = div(cls := "note-zone")(
     postForm(cls := "note-form", action := routes.User.writeNote(u.username))(
       form3.textarea(lila.user.UserForm.note("text"))(
         placeholder := trans.writeAPrivateNoteAboutThisUser.txt()
@@ -284,7 +295,7 @@ object header:
               submitButton(
                 cls      := "button-empty button-red confirm button text",
                 style    := "float:right",
-                dataIcon := ""
+                dataIcon := licon.Trash
               )(trans.delete())
             )
           )

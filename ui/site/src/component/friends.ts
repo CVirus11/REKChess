@@ -1,6 +1,7 @@
 import { siteTrans } from './trans';
 import pubsub from './pubsub';
 import { notNull } from 'common/common';
+import * as licon from 'common/licon';
 
 type TitleName = string;
 
@@ -55,7 +56,9 @@ export default class OnlineFriends {
           this.loaded ? `<strong>${ids.length}</strong>` : '-'
         );
         this.el.querySelector('.nobody')?.classList.toggle('none', !!ids[0]);
-        this.el.querySelector('.list')!.innerHTML = ids.map(id => this.renderFriend(this.users.get(id)!)).join('');
+        this.el.querySelector('.list')!.innerHTML = ids
+          .map(id => this.renderFriend(this.users.get(id)!))
+          .join('');
       });
   };
   renderFriend = (friend: Friend) => {
@@ -65,7 +68,7 @@ export default class OnlineFriends {
         : '',
       url = '/@/' + friend.name,
       tvButton = friend.playing
-        ? `<a data-icon="" class="tv ulpt" data-pt-pos="nw" href="${url}/tv" data-href="${url}"></a>`
+        ? `<a data-icon="${licon.AnalogTv}" class="tv ulpt" data-pt-pos="nw" href="${url}/tv" data-href="${url}"></a>`
         : '';
     return `<div><a class="user-link ulpt" data-pt-pos="nw" href="${url}">${icon}${titleTag}${friend.name}</a>${tvButton}</div>`;
   };

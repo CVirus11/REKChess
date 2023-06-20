@@ -15,30 +15,37 @@ final class JsonView(rematches: Rematches):
   def base(game: Game, initialFen: Option[Fen.Epd]) =
     Json
       .obj(
-        "id"            -> game.id,
-        "variant"       -> game.variant,
-        "speed"         -> game.speed.key,
-        "perf"          -> PerfPicker.key(game),
-        "rated"         -> game.rated,
-        "fen"           -> (Fen write game.chess),
-        "player"        -> game.turnColor,
-        "turns"         -> game.ply,
-        "startedAtTurn" -> game.chess.startedAtPly,
-        "source"        -> game.source,
-        "status"        -> game.status,
-        "createdAt"     -> game.createdAt
+        "id"        -> game.id,
+        "variant"   -> game.variant,
+        "speed"     -> game.speed.key,
+        "perf"      -> PerfPicker.key(game),
+        "rated"     -> game.rated,
+        "fen"       -> Fen.write(game.chess),
+        "turns"     -> game.ply,
+        "source"    -> game.source,
+        "status"    -> game.status,
+        "createdAt" -> game.createdAt
       )
+      .add("startedAtTurn" -> game.chess.startedAtPly.some.filter(_ > 0))
       .add("initialFen" -> initialFen)
       .add("threefold" -> game.history.threefoldRepetition)
       .add("boosted" -> game.boosted)
       .add("tournamentId" -> game.tournamentId)
       .add("swissId" -> game.swissId)
       .add("winner" -> game.winnerColor)
-      .add("lastMove" -> game.lastMoveKeys)
-      .add("check" -> game.situation.checkSquare.map(_.key))
       .add("rematch" -> rematches.getAcceptedId(game.id))
       .add("drawOffers" -> (!game.drawOffers.isEmpty).option(game.drawOffers.normalizedPlies))
       .add("rules" -> game.metadata.nonEmptyRules)
+
+    // adds fields that could be computed by the client instead
+  def baseWithChessDenorm(game: Game, initialFen: Option[Fen.Epd]) =
+    base(game, initialFen) ++ Json
+      .obj(
+        "player" -> game.turnColor,
+        "fen"    -> Fen.write(game.chess)
+      )
+      .add("check" -> game.situation.checkSquare.map(_.key))
+      .add("lastMove" -> game.lastMoveKeys)
 
   def ownerPreview(pov: Pov)(using LightUser.GetterSync) =
     Json
@@ -65,6 +72,7 @@ final class JsonView(rematches: Rematches):
               .playerTextBlocking(pov.opponent, withRating = false)
           )
           .add("rating" -> pov.opponent.rating)
+          .add("ratingDiff" -> pov.opponent.ratingDiff)
           .add("ai" -> pov.opponent.aiLevel),
         "isMyTurn" -> pov.isMyTurn
       )
@@ -73,6 +81,7 @@ final class JsonView(rematches: Rematches):
       .add("swissId" -> pov.game.swissId)
       .add("orientation" -> pov.game.variant.racingKings.option(chess.White))
       .add("winner" -> pov.game.winnerColor)
+      .add("ratingDiff" -> pov.player.ratingDiff)
 
   def player(p: Player, user: Option[LightUser]) =
     Json
@@ -117,18 +126,6 @@ object JsonView:
 
   def crosstable(ct: Crosstable, matchup: Option[Crosstable.Matchup]) =
     Json.toJsObject(ct).add("matchup" -> matchup)
-
-  given OWrites[Crazyhouse.Pocket] = OWrites { v =>
-    JsObject(
-      v.values.collect {
-        case (role, nb) if nb > 0 => role.name -> JsNumber(nb)
-      }
-    )
-  }
-
-  given OWrites[chess.variant.Crazyhouse.Data] = OWrites { v =>
-    Json.obj("pockets" -> List(v.pockets.white, v.pockets.black))
-  }
 
   given OWrites[Blurs] = OWrites { blurs =>
     Json.obj(

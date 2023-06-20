@@ -63,7 +63,7 @@ final private class LinkCheck(
   private def tourLink(tourId: String, source: FullSource): Fu[Boolean] =
     tournamentRepo byId TourId(tourId) flatMapz { tour =>
       fuccess(tour.isScheduled) >>| {
-        source.teamId ?? { sourceTeamId =>
+        source.teamId so { sourceTeamId =>
           fuccess(tour.conditions.teamMember.exists(_.teamId == sourceTeamId)) >>|
             tournamentRepo.isForTeam(tour.id, sourceTeamId)
         }
@@ -103,7 +103,7 @@ private object LinkCheck:
       def teamId = value.conditions.teamMember.map(_.teamId)
     case class SimulSource(value: Simul) extends FullSource:
       def owners = Set(value.hostId)
-      def teamId = value.team
+      def teamId = value.conditions.teamMember.map(_.teamId)
     case class SwissSource(value: Swiss) extends FullSource:
       def owners = Set(value.createdBy)
       def teamId = value.teamId.some

@@ -25,6 +25,6 @@
   <string name="currentRoundUrl">Preaguse vooru URL</string>
   <string name="currentGameUrl">Praeguse mängu URL</string>
   <string name="downloadAllRounds">Lae alla kõik voorud</string>
-  <string name="definitivelyDeleteRound" comment="definitivelyDeleteRound&#10;&#10;Refers to live tournaments being broadcast on lichess&#10;&#10;Description (also translateable): Delete all games of this round. The source will need to be active in order to re-create them.">Kustuta lõplikult voor ja selle mängud.</string>
+  <string name="definitivelyDeleteRound">Kustuta lõplikult voor ja selle mängud.</string>
   <string name="deleteAllGamesOfThisRound">Kustuta kõik mängud sellest voorust. Allikas peab olema aktiveeritud nende taastamiseks.</string>
 </resources>
